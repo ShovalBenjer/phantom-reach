@@ -11,7 +11,7 @@ export const POSE_DETECTION_CONFIG: PoseDetectionConfig = {
 export const WEBCAM_CONFIG = {
   width: 640,
   height: 480,
-  facingMode: 'user',
+  facingMode: "user",
 };
 
 export const FRAME_PROCESSING_INTERVAL = 1000 / 30; // 30 FPS

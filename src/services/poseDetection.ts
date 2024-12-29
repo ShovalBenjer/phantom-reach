@@ -13,7 +13,7 @@ class PoseDetectionService {
 
   async initialize(): Promise<void> {
     try {
-      console.log('Initializing pose detection...');
+      console.log('Initializing pose detection with config:', POSE_DETECTION_CONFIG);
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
@@ -30,7 +30,7 @@ class PoseDetectionService {
         minTrackingConfidence: POSE_DETECTION_CONFIG.minTrackingConfidence,
       });
 
-      console.log('Pose detection initialized successfully');
+      console.log('Pose detection initialized successfully:', this.poseLandmarker);
     } catch (error) {
       console.error('Failed to initialize pose detection:', error);
       toast({
@@ -47,7 +47,9 @@ class PoseDetectionService {
       console.log('Skipping detection:', {
         hasLandmarker: !!this.poseLandmarker,
         isProcessing: this.isProcessing,
-        videoWidth: video.videoWidth
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        videoReadyState: video.readyState
       });
       return null;
     }
@@ -59,7 +61,11 @@ class PoseDetectionService {
 
     this.isProcessing = true;
     try {
-      console.log('Detecting poses...');
+      console.log('Detecting poses on video:', {
+        time: currentTime,
+        videoSize: `${video.videoWidth}x${video.videoHeight}`
+      });
+      
       const results = await this.poseLandmarker.detectForVideo(video, currentTime);
       this.lastProcessingTime = currentTime;
       
@@ -69,20 +75,24 @@ class PoseDetectionService {
         this.fps = this.frameCount;
         this.frameCount = 0;
         this.lastFpsUpdate = currentTime;
+        console.log('Current FPS:', this.fps);
       }
 
       if (results?.landmarks?.[0]) {
-        console.log('Pose detected:', results.landmarks[0]);
+        console.log('Pose landmarks detected:', results.landmarks[0]);
+        const landmarks = results.landmarks[0];
         return {
-          leftElbow: results.landmarks[0][13] || null,  // Left elbow landmark index
-          rightElbow: results.landmarks[0][14] || null, // Right elbow landmark index
+          leftElbow: landmarks[13] || null,  // Left elbow landmark index
+          rightElbow: landmarks[14] || null, // Right elbow landmark index
         };
       }
+      
       console.log('No pose detected in results:', results);
       return null;
     } catch (error) {
       console.error('Error detecting poses:', error);
-      return null;
+      this.isProcessing = false;
+      throw error;
     } finally {
       this.isProcessing = false;
     }
