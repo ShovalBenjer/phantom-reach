@@ -31,72 +31,45 @@ export class VirtualHandService {
       this.ctx.fill();
 
       if (showVirtualHand) {
-        // Calculate hand position and angle
+        // Calculate hand position based on elbow angle
         const handLength = 100;
-        const angle = Math.atan2(landmark.y - 0.5, landmark.x - 0.5) + Math.PI / 4; // Adjusted angle
+        const angle = Math.atan2(landmark.y - 0.5, landmark.x - 0.5);
         
         const handX = x + Math.cos(angle) * handLength;
         const handY = y + Math.sin(angle) * handLength;
 
-        // Draw arm with gradient
-        const gradient = this.ctx.createLinearGradient(x, y, handX, handY);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.6)');
-        
+        // Draw arm line
         this.ctx.beginPath();
         this.ctx.moveTo(x, y);
         this.ctx.lineTo(handX, handY);
-        this.ctx.strokeStyle = gradient;
-        this.ctx.lineWidth = 8;
-        this.ctx.lineCap = 'round';
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 3;
         this.ctx.stroke();
 
-        // Draw modern hand shape
-        this.ctx.save();
-        this.ctx.translate(handX, handY);
-        this.ctx.rotate(angle);
-
-        // Palm
+        // Draw hand
         this.ctx.beginPath();
-        this.ctx.ellipse(0, 0, radius * 1.5, radius * 2, 0, 0, 2 * Math.PI);
-        this.ctx.fillStyle = color;
+        this.ctx.arc(handX, handY, radius * 1.2, 0, 2 * Math.PI);
         this.ctx.fill();
 
-        // Fingers
-        const fingerCount = 5;
-        const fingerSpacing = (Math.PI / 3) / (fingerCount - 1);
-        const fingerLength = radius * 2.5;
-        const baseAngle = -Math.PI / 6;
+        // Draw fingers
+        const fingerLength = 30;
+        const fingerSpread = Math.PI / 4;
+        const baseFingerAngle = angle - (fingerSpread * 2);
 
-        for (let i = 0; i < fingerCount; i++) {
-          const fingerAngle = baseAngle + (fingerSpacing * i);
-          const fingerX = Math.cos(fingerAngle) * fingerLength;
-          const fingerY = Math.sin(fingerAngle) * fingerLength;
+        for (let i = 0; i < 5; i++) {
+          const fingerAngle = baseFingerAngle + (fingerSpread * i);
+          const fingerX = handX + Math.cos(fingerAngle) * fingerLength;
+          const fingerY = handY + Math.sin(fingerAngle) * fingerLength;
 
-          // Draw finger segments
           this.ctx.beginPath();
-          this.ctx.moveTo(0, 0);
-          
-          // Control points for curved fingers
-          const cp1x = fingerX * 0.5;
-          const cp1y = fingerY * 0.3;
-          const cp2x = fingerX * 0.7;
-          const cp2y = fingerY * 0.7;
-          
-          this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, fingerX, fingerY);
-          this.ctx.lineWidth = 6;
-          this.ctx.lineCap = 'round';
-          this.ctx.strokeStyle = color;
+          this.ctx.moveTo(handX, handY);
+          this.ctx.lineTo(fingerX, fingerY);
           this.ctx.stroke();
 
-          // Finger tips
           this.ctx.beginPath();
-          this.ctx.arc(fingerX, fingerY, 3, 0, 2 * Math.PI);
-          this.ctx.fillStyle = color;
+          this.ctx.arc(fingerX, fingerY, radius * 0.5, 0, 2 * Math.PI);
           this.ctx.fill();
         }
-
-        this.ctx.restore();
       }
     });
   }

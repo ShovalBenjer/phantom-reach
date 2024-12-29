@@ -23,7 +23,6 @@ export const PoseDetectionUI: React.FC = () => {
   const fpsIntervalRef = useRef<number>();
   const animationFrameRef = useRef<number>();
   const detectionLoopRef = useRef<boolean>(false);
-  const detectionBufferRef = useRef<boolean[]>([]);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -55,11 +54,6 @@ export const PoseDetectionUI: React.FC = () => {
             videoRef.current.onloadedmetadata = () => resolve();
           }
         });
-        
-        if (canvasRef.current) {
-          canvasRef.current.width = videoRef.current.videoWidth;
-          canvasRef.current.height = videoRef.current.videoHeight;
-        }
         
         console.log('Webcam stream loaded, initializing pose detection...');
         await poseDetectionService.initialize();
@@ -109,16 +103,6 @@ export const PoseDetectionUI: React.FC = () => {
     }
   };
 
-  const updateDetectionBuffer = (detected: boolean) => {
-    detectionBufferRef.current.push(detected);
-    if (detectionBufferRef.current.length > 10) {
-      detectionBufferRef.current.shift();
-    }
-    
-    const trueCount = detectionBufferRef.current.filter(Boolean).length;
-    return trueCount > detectionBufferRef.current.length / 2;
-  };
-
   const startPoseDetection = async () => {
     if (!videoRef.current || !virtualHandServiceRef.current) {
       console.log('Cannot start detection - missing refs:', {
@@ -138,38 +122,23 @@ export const PoseDetectionUI: React.FC = () => {
       
       try {
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
-        const isCurrentlyDetected = !!elbows;
-        const isStablyDetected = updateDetectionBuffer(isCurrentlyDetected);
-        setIsPoseDetected(isStablyDetected);
+        setIsPoseDetected(!!elbows);
         
-        if (elbows && isStablyDetected && canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            
-            // Mirror the elbow coordinates
-            const mirroredLeftElbow = elbows.leftElbow ? {
-              ...elbows.leftElbow,
-              x: 1 - elbows.leftElbow.x
-            } : null;
-            
-            const mirroredRightElbow = elbows.rightElbow ? {
-              ...elbows.rightElbow,
-              x: 1 - elbows.rightElbow.x
-            } : null;
-            
-            if (amputationType === 'left_arm' || amputationType === 'both') {
-              virtualHandServiceRef.current?.renderHand(mirroredLeftElbow, { 
-                color: 'rgba(255, 0, 0, 0.6)',
-                showVirtualHand: isVirtualHandEnabled 
-              });
-            }
-            if (amputationType === 'right_arm' || amputationType === 'both') {
-              virtualHandServiceRef.current?.renderHand(mirroredRightElbow, { 
-                color: 'rgba(0, 255, 0, 0.6)',
-                showVirtualHand: isVirtualHandEnabled 
-              });
-            }
+        if (elbows) {
+          console.log('Elbows detected:', elbows);
+          virtualHandServiceRef.current?.clearCanvas();
+          
+          if (amputationType === 'left_arm' || amputationType === 'both') {
+            virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
+              color: 'rgba(255, 0, 0, 0.6)',
+              showVirtualHand: isVirtualHandEnabled 
+            });
+          }
+          if (amputationType === 'right_arm' || amputationType === 'both') {
+            virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
+              color: 'rgba(0, 255, 0, 0.6)',
+              showVirtualHand: isVirtualHandEnabled 
+            });
           }
         }
 
@@ -211,13 +180,13 @@ export const PoseDetectionUI: React.FC = () => {
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
           ref={videoRef}
-          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}`}
           autoPlay
           playsInline
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1]"
+          className="absolute top-0 left-0 w-full h-full pointer-events-none"
           width={640}
           height={480}
         />
