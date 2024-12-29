@@ -1,3 +1,19 @@
+/**
+ * @component PoseControls
+ * @description UI component that provides controls for pose detection settings and visualization options.
+ * 
+ * @prop {boolean} isWebcamEnabled - Current webcam state
+ * @prop {boolean} isDetectionActive - Current detection state
+ * @prop {boolean} isVirtualHandEnabled - Virtual hand visibility state
+ * @prop {boolean} isFullscreen - Fullscreen mode state
+ * @prop {AmputationType} amputationType - Selected amputation type
+ * @prop {Function} onStartWebcam - Handler for starting webcam
+ * @prop {Function} onToggleDetection - Handler for toggling detection
+ * @prop {Function} onToggleVirtualHand - Handler for toggling hand visibility
+ * @prop {Function} onToggleFullscreen - Handler for toggling fullscreen mode
+ * @prop {Function} onAmputationTypeChange - Handler for changing amputation type
+ */
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

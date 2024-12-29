@@ -1,3 +1,19 @@
+/**
+ * @class ThreeDHandService
+ * @description Service that manages 3D hand rendering using Three.js.
+ * Handles scene setup, hand model creation, lighting, and animations.
+ * 
+ * @method initialize - Sets up Three.js scene and hand model
+ * @method createRealisticHand - Creates detailed hand geometry with joints
+ * @method updateHandPosition - Updates hand position based on pose
+ * @method setVisible - Controls hand visibility
+ * @method dispose - Cleans up Three.js resources
+ * 
+ * @property {THREE.Scene} scene - Three.js scene
+ * @property {THREE.Group} hand - Hand model group
+ * @property {THREE.Mesh[]} joints - Array of joint meshes
+ */
+
 import * as THREE from 'three';
 import { Landmark } from '../types';
 

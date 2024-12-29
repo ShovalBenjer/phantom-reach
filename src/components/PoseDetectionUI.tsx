@@ -1,3 +1,20 @@
+/**
+ * @component PoseDetectionUI
+ * @description Main component that orchestrates webcam input, pose detection, and hand visualization.
+ * Manages the webcam stream, pose detection state, and coordinates between different services.
+ * 
+ * @state isWebcamEnabled - Controls webcam activation state
+ * @state isDetectionActive - Manages pose detection status
+ * @state isVirtualHandEnabled - Controls virtual hand visibility
+ * @state isPoseDetected - Indicates if a pose is currently detected
+ * @state fps - Current frames per second of pose detection
+ * @state amputationType - Selected amputation type ('left_arm', 'right_arm', 'both')
+ * 
+ * @uses PoseControls - Component for UI controls
+ * @uses ThreeDHand - Component for 3D hand visualization
+ * @uses poseDetectionService - Service for pose detection
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
@@ -216,3 +233,4 @@ export const PoseDetectionUI: React.FC = () => {
     </div>
   );
 };
+
