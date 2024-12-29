@@ -3,9 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
-import { VirtualHandService } from '../services/virtualHand';
 import { WEBCAM_CONFIG } from '../config/detection';
 import { PoseControls } from './pose/PoseControls';
+import { ThreeDHand } from './pose/ThreeDHand';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -16,22 +16,20 @@ export const PoseDetectionUI: React.FC = () => {
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [poseBuffer, setPoseBuffer] = useState<boolean[]>([]);
-  const bufferSize = 5; // Adjust this value to change stabilization sensitivity
+  const [leftElbow, setLeftElbow] = useState(null);
+  const [rightElbow, setRightElbow] = useState(null);
+  const [leftShoulder, setLeftShoulder] = useState(null);
+  const [rightShoulder, setRightShoulder] = useState(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const virtualHandServiceRef = useRef<VirtualHandService | null>(null);
   const fpsIntervalRef = useRef<number>();
   const animationFrameRef = useRef<number>();
   const detectionLoopRef = useRef<boolean>(false);
+  const bufferSize = 10; // Increased buffer size for smoother detection
 
   useEffect(() => {
-    if (canvasRef.current) {
-      virtualHandServiceRef.current = new VirtualHandService(canvasRef.current);
-    }
     return () => {
-      virtualHandServiceRef.current?.dispose();
       if (fpsIntervalRef.current) {
         clearInterval(fpsIntervalRef.current);
       }
@@ -84,6 +82,11 @@ export const PoseDetectionUI: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      setLeftElbow(null);
+      setRightElbow(null);
+      setLeftShoulder(null);
+      setRightShoulder(null);
+      setPoseBuffer([]);
     } else {
       console.log('Starting detection...');
       startPoseDetection();
@@ -106,49 +109,29 @@ export const PoseDetectionUI: React.FC = () => {
   };
 
   const startPoseDetection = async () => {
-    if (!videoRef.current || !virtualHandServiceRef.current) {
-      console.log('Cannot start detection - missing refs:', {
-        hasVideoRef: !!videoRef.current,
-        hasVirtualHandRef: !!virtualHandServiceRef.current
-      });
-      return;
-    }
+    if (!videoRef.current) return;
 
     detectionLoopRef.current = true;
 
     const detectFrame = async () => {
-      if (!detectionLoopRef.current) {
-        console.log('Detection stopped');
-        return;
-      }
+      if (!detectionLoopRef.current) return;
       
       try {
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
         
-        // Update pose buffer for stabilization
-        const newBuffer = [...poseBuffer, !!elbows].slice(-bufferSize);
-        setPoseBuffer(newBuffer);
-        const isStablePoseDetected = newBuffer.filter(Boolean).length > bufferSize / 2;
-        setIsPoseDetected(isStablePoseDetected);
-        
         if (elbows) {
-          console.log('Elbows detected:', elbows);
-          virtualHandServiceRef.current?.clearCanvas();
+          const newBuffer = [...poseBuffer, true].slice(-bufferSize);
+          setPoseBuffer(newBuffer);
+          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
           
-          if (amputationType === 'left_arm' || amputationType === 'both') {
-            const leftShoulder = elbows.landmarks?.[11] || null; // Left shoulder landmark
-            virtualHandServiceRef.current?.renderHand(elbows.leftElbow, leftShoulder, { 
-              color: 'rgba(255, 0, 0, 0.6)',
-              showVirtualHand: isVirtualHandEnabled 
-            });
-          }
-          if (amputationType === 'right_arm' || amputationType === 'both') {
-            const rightShoulder = elbows.landmarks?.[12] || null; // Right shoulder landmark
-            virtualHandServiceRef.current?.renderHand(elbows.rightElbow, rightShoulder, { 
-              color: 'rgba(0, 255, 0, 0.6)',
-              showVirtualHand: isVirtualHandEnabled 
-            });
-          }
+          setLeftElbow(elbows.leftElbow);
+          setRightElbow(elbows.rightElbow);
+          setLeftShoulder(elbows.landmarks?.[11] || null);
+          setRightShoulder(elbows.landmarks?.[12] || null);
+        } else {
+          const newBuffer = [...poseBuffer, false].slice(-bufferSize);
+          setPoseBuffer(newBuffer);
+          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
         }
 
         animationFrameRef.current = requestAnimationFrame(detectFrame);
@@ -189,16 +172,46 @@ export const PoseDetectionUI: React.FC = () => {
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
           ref={videoRef}
-          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}`}
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
           autoPlay
           playsInline
         />
-        <canvas
-          ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-          width={640}
-          height={480}
-        />
+        {isDetectionActive && (
+          <>
+            {amputationType === 'left_arm' && (
+              <ThreeDHand
+                isEnabled={isVirtualHandEnabled}
+                isDetectionActive={isDetectionActive}
+                elbow={leftElbow}
+                shoulder={leftShoulder}
+              />
+            )}
+            {amputationType === 'right_arm' && (
+              <ThreeDHand
+                isEnabled={isVirtualHandEnabled}
+                isDetectionActive={isDetectionActive}
+                elbow={rightElbow}
+                shoulder={rightShoulder}
+              />
+            )}
+            {amputationType === 'both' && (
+              <>
+                <ThreeDHand
+                  isEnabled={isVirtualHandEnabled}
+                  isDetectionActive={isDetectionActive}
+                  elbow={leftElbow}
+                  shoulder={leftShoulder}
+                />
+                <ThreeDHand
+                  isEnabled={isVirtualHandEnabled}
+                  isDetectionActive={isDetectionActive}
+                  elbow={rightElbow}
+                  shoulder={rightShoulder}
+                />
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
