@@ -1,23 +1,8 @@
-/**
- * @component PoseControls
- * @description UI component that provides controls for pose detection settings and visualization options.
- * 
- * @prop {boolean} isWebcamEnabled - Current webcam state
- * @prop {boolean} isDetectionActive - Current detection state
- * @prop {boolean} isVirtualHandEnabled - Virtual hand visibility state
- * @prop {boolean} isFullscreen - Fullscreen mode state
- * @prop {AmputationType} amputationType - Selected amputation type
- * @prop {Function} onStartWebcam - Handler for starting webcam
- * @prop {Function} onToggleDetection - Handler for toggling detection
- * @prop {Function} onToggleVirtualHand - Handler for toggling hand visibility
- * @prop {Function} onToggleFullscreen - Handler for toggling fullscreen mode
- * @prop {Function} onAmputationTypeChange - Handler for changing amputation type
- */
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Video, VideoOff, Hand, HandMetal } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AmputationType } from '../../types';
 
 interface PoseControlsProps {
@@ -46,55 +31,108 @@ export const PoseControls: React.FC<PoseControlsProps> = ({
   onAmputationTypeChange,
 }) => {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-2">
-        <Select value={amputationType} onValueChange={onAmputationTypeChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select amputation type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="left_arm">Left Arm</SelectItem>
-            <SelectItem value="right_arm">Right Arm</SelectItem>
-            <SelectItem value="both">Both Arms</SelectItem>
-          </SelectContent>
-        </Select>
+    <TooltipProvider>
+      <div className="flex flex-col gap-4 animate-fade-in">
+        <div className="flex gap-2">
+          <Select value={amputationType} onValueChange={onAmputationTypeChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select amputation type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left_arm">Left Arm</SelectItem>
+              <SelectItem value="right_arm">Right Arm</SelectItem>
+              <SelectItem value="both">Both Arms</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Button
-          onClick={onToggleFullscreen}
-          variant="outline"
-          size="icon"
-        >
-          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onToggleFullscreen}
+                variant="outline"
+                size="icon"
+                className="hover:scale-105 transition-transform"
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="flex gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onStartWebcam}
+                disabled={isWebcamEnabled}
+                className="bg-primary hover:bg-primary/90 hover:scale-105 transition-all"
+              >
+                {isWebcamEnabled ? (
+                  <>
+                    <Video className="mr-2 h-4 w-4" />
+                    Webcam Enabled
+                  </>
+                ) : (
+                  <>
+                    <VideoOff className="mr-2 h-4 w-4" />
+                    Enable Webcam
+                  </>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isWebcamEnabled ? 'Webcam is active' : 'Start webcam feed'}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {isWebcamEnabled && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onToggleDetection}
+                    variant={isDetectionActive ? "destructive" : "default"}
+                    className="hover:scale-105 transition-transform"
+                  >
+                    {isDetectionActive ? 'Stop Detection' : 'Start Detection'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isDetectionActive ? 'Stop pose detection' : 'Start pose detection'}</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onToggleVirtualHand}
+                    variant={isVirtualHandEnabled ? "secondary" : "outline"}
+                    className="hover:scale-105 transition-transform"
+                  >
+                    {isVirtualHandEnabled ? (
+                      <>
+                        <HandMetal className="mr-2 h-4 w-4" />
+                        Hide Virtual Hand
+                      </>
+                    ) : (
+                      <>
+                        <Hand className="mr-2 h-4 w-4" />
+                        Show Virtual Hand
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isVirtualHandEnabled ? 'Hide virtual hand visualization' : 'Show virtual hand visualization'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
+        </div>
       </div>
-
-      <div className="flex gap-2">
-        <Button
-          onClick={onStartWebcam}
-          disabled={isWebcamEnabled}
-          className="bg-primary hover:bg-primary/90"
-        >
-          {isWebcamEnabled ? 'Webcam Enabled' : 'Enable Webcam'}
-        </Button>
-
-        {isWebcamEnabled && (
-          <>
-            <Button
-              onClick={onToggleDetection}
-              variant={isDetectionActive ? "destructive" : "default"}
-            >
-              {isDetectionActive ? 'Stop Detection' : 'Start Detection'}
-            </Button>
-
-            <Button
-              onClick={onToggleVirtualHand}
-              variant={isVirtualHandEnabled ? "secondary" : "outline"}
-            >
-              {isVirtualHandEnabled ? 'Hide Virtual Hand' : 'Show Virtual Hand'}
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
+    </TooltipProvider>
   );
 };
