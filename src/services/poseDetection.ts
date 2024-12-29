@@ -13,13 +13,17 @@ class PoseDetectionService {
 
   async initialize(): Promise<void> {
     try {
+      console.log('Initializing pose detection...');
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
       
       this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-        baseOptions: { modelAssetPath: POSE_DETECTION_CONFIG.modelPath },
-        runningMode: 'VIDEO',
+        baseOptions: {
+          modelAssetPath: POSE_DETECTION_CONFIG.modelPath,
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
         numPoses: POSE_DETECTION_CONFIG.numPoses,
         minPoseDetectionConfidence: POSE_DETECTION_CONFIG.minPoseDetectionConfidence,
         minPosePresenceConfidence: POSE_DETECTION_CONFIG.minPosePresenceConfidence,
@@ -42,7 +46,6 @@ class PoseDetectionService {
     if (!this.poseLandmarker || this.isProcessing) return null;
     
     const currentTime = performance.now();
-    // Throttle to ~30 FPS
     if (currentTime - this.lastProcessingTime < 33.33) {
       return null;
     }

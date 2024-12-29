@@ -32,17 +32,24 @@ export const PoseDetectionUI: React.FC = () => {
 
   const startWebcam = async () => {
     try {
+      console.log('Requesting webcam access...');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: WEBCAM_CONFIG,
       });
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        await new Promise<void>((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => resolve();
+          }
+        });
+        
+        console.log('Webcam stream loaded, initializing pose detection...');
         setIsWebcamEnabled(true);
         await poseDetectionService.initialize();
         startPoseDetection();
         
-        // Start FPS counter update
         fpsIntervalRef.current = window.setInterval(() => {
           setFps(poseDetectionService.getFPS());
         }, 1000);
