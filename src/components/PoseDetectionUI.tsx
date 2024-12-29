@@ -22,6 +22,7 @@ export const PoseDetectionUI: React.FC = () => {
   const virtualHandServiceRef = useRef<VirtualHandService | null>(null);
   const fpsIntervalRef = useRef<number>();
   const animationFrameRef = useRef<number>();
+  const detectionLoopRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -35,6 +36,7 @@ export const PoseDetectionUI: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      detectionLoopRef.current = false;
     };
   }, []);
 
@@ -75,10 +77,13 @@ export const PoseDetectionUI: React.FC = () => {
 
   const toggleDetection = () => {
     if (isDetectionActive) {
+      console.log('Stopping detection...');
+      detectionLoopRef.current = false;
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     } else {
+      console.log('Starting detection...');
       startPoseDetection();
     }
     setIsDetectionActive(!isDetectionActive);
@@ -107,14 +112,15 @@ export const PoseDetectionUI: React.FC = () => {
       return;
     }
 
+    detectionLoopRef.current = true;
+
     const detectFrame = async () => {
-      if (!isDetectionActive) {
+      if (!detectionLoopRef.current) {
         console.log('Detection stopped');
         return;
       }
       
       try {
-        console.log('Detecting frame...');
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
         setIsPoseDetected(!!elbows);
         
@@ -134,14 +140,13 @@ export const PoseDetectionUI: React.FC = () => {
               showVirtualHand: isVirtualHandEnabled 
             });
           }
-        } else {
-          console.log('No elbows detected');
         }
+
+        animationFrameRef.current = requestAnimationFrame(detectFrame);
       } catch (error) {
         console.error('Error in pose detection:', error);
+        detectionLoopRef.current = false;
       }
-
-      animationFrameRef.current = requestAnimationFrame(detectFrame);
     };
 
     detectFrame();
