@@ -23,6 +23,8 @@ export interface HandStyle {
   color: string;
   metalness: number;
   roughness: number;
+  radius?: number;
+  showVirtualHand?: boolean;
 }
 
 export interface CalibrationData {
