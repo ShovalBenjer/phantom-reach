@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
@@ -10,11 +11,14 @@ import { WEBCAM_CONFIG } from '../config/detection';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
+  const [isDetectionActive, setIsDetectionActive] = useState(false);
   const [isPoseDetected, setIsPoseDetected] = useState(false);
   const [fps, setFps] = useState(0);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const virtualHandServiceRef = useRef<VirtualHandService | null>(null);
   const fpsIntervalRef = useRef<number>();
 
@@ -48,6 +52,7 @@ export const PoseDetectionUI: React.FC = () => {
         console.log('Webcam stream loaded, initializing pose detection...');
         setIsWebcamEnabled(true);
         await poseDetectionService.initialize();
+        setIsDetectionActive(true);
         startPoseDetection();
         
         fpsIntervalRef.current = window.setInterval(() => {
@@ -64,22 +69,46 @@ export const PoseDetectionUI: React.FC = () => {
     }
   };
 
+  const toggleDetection = () => {
+    setIsDetectionActive(!isDetectionActive);
+    if (!isDetectionActive) {
+      startPoseDetection();
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
   const startPoseDetection = () => {
     if (!videoRef.current || !virtualHandServiceRef.current) return;
 
     const detectFrame = async () => {
-      const elbows = await poseDetectionService.detectElbows(videoRef.current!);
+      if (!isDetectionActive) return;
       
+      const elbows = await poseDetectionService.detectElbows(videoRef.current!);
       setIsPoseDetected(!!elbows);
       
       if (elbows) {
         virtualHandServiceRef.current?.clearCanvas();
         
         if (amputationType === 'left_arm' || amputationType === 'both') {
-          virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { color: 'rgba(255, 0, 0, 0.6)' });
+          virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
+            color: 'rgba(255, 0, 0, 0.6)',
+            showVirtualHand: true 
+          });
         }
         if (amputationType === 'right_arm' || amputationType === 'both') {
-          virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { color: 'rgba(0, 255, 0, 0.6)' });
+          virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
+            color: 'rgba(0, 255, 0, 0.6)',
+            showVirtualHand: true 
+          });
         }
       }
 
@@ -90,7 +119,7 @@ export const PoseDetectionUI: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4 p-6">
+    <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
       <div className="flex gap-2 items-center">
         <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
           {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
@@ -101,29 +130,50 @@ export const PoseDetectionUI: React.FC = () => {
         <Badge variant="outline">{fps} FPS</Badge>
       </div>
 
-      <Select value={amputationType} onValueChange={(value: AmputationType) => setAmputationType(value)}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select amputation type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="left_arm">Left Arm</SelectItem>
-          <SelectItem value="right_arm">Right Arm</SelectItem>
-          <SelectItem value="both">Both Arms</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex gap-2">
+        <Select value={amputationType} onValueChange={(value: AmputationType) => setAmputationType(value)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select amputation type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="left_arm">Left Arm</SelectItem>
+            <SelectItem value="right_arm">Right Arm</SelectItem>
+            <SelectItem value="both">Both Arms</SelectItem>
+          </SelectContent>
+        </Select>
 
-      <Button
-        onClick={startWebcam}
-        disabled={isWebcamEnabled}
-        className="bg-primary hover:bg-primary/90"
-      >
-        {isWebcamEnabled ? 'Webcam Enabled' : 'Enable Webcam'}
-      </Button>
+        <Button
+          onClick={toggleFullscreen}
+          variant="outline"
+          size="icon"
+        >
+          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </Button>
+      </div>
 
-      <div className="relative">
+      <div className="flex gap-2">
+        <Button
+          onClick={startWebcam}
+          disabled={isWebcamEnabled}
+          className="bg-primary hover:bg-primary/90"
+        >
+          {isWebcamEnabled ? 'Webcam Enabled' : 'Enable Webcam'}
+        </Button>
+
+        {isWebcamEnabled && (
+          <Button
+            onClick={toggleDetection}
+            variant={isDetectionActive ? "destructive" : "default"}
+          >
+            {isDetectionActive ? 'Stop Detection' : 'Start Detection'}
+          </Button>
+        )}
+      </div>
+
+      <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
           ref={videoRef}
-          className="w-[640px] h-[480px] border-2 border-gray-300"
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}`}
           autoPlay
           playsInline
         />

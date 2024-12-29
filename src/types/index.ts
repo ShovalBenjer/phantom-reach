@@ -21,6 +21,7 @@ export interface ElbowPositions {
 export interface HandStyle {
   radius?: number;
   color?: string;
+  showVirtualHand?: boolean;
 }
 
 export type AmputationType = 'left_arm' | 'right_arm' | 'both';
