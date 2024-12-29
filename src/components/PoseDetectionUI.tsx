@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, lazy, Suspense } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
@@ -6,8 +6,12 @@ import { WEBCAM_CONFIG } from '../config/detection';
 import { PoseControls } from './pose/PoseControls';
 import { StatusIndicators } from './pose/StatusIndicators';
 import { WebcamComponent } from './pose/WebcamComponent';
-import { HandVisualization } from './pose/HandVisualization';
 import { usePoseDetection } from '../hooks/usePoseDetection';
+
+// Lazy load the HandVisualization component
+const HandVisualization = lazy(() => import('./pose/HandVisualization').then(module => ({
+  default: module.HandVisualization
+})));
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -74,7 +78,12 @@ export const PoseDetectionUI: React.FC = () => {
   };
 
   return (
-    <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
+    <div 
+      ref={containerRef} 
+      className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}
+      role="main"
+      aria-label="Pose Detection Interface"
+    >
       <StatusIndicators
         isWebcamEnabled={isWebcamEnabled}
         isPoseDetected={isPoseDetected}
@@ -94,20 +103,28 @@ export const PoseDetectionUI: React.FC = () => {
         onAmputationTypeChange={setAmputationType}
       />
 
-      <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
+      <div 
+        className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}
+        role="region"
+        aria-label="Visualization Area"
+      >
         <WebcamComponent
           videoRef={videoRef}
           isFullscreen={isFullscreen}
         />
-        <HandVisualization
-          isDetectionActive={isDetectionActive}
-          isVirtualHandEnabled={isVirtualHandEnabled}
-          amputationType={amputationType}
-          leftElbow={leftElbow}
-          rightElbow={rightElbow}
-          leftShoulder={leftShoulder}
-          rightShoulder={rightShoulder}
-        />
+        <Suspense fallback={<div className="animate-pulse">Loading visualization...</div>}>
+          {isWebcamEnabled && (
+            <HandVisualization
+              isDetectionActive={isDetectionActive}
+              isVirtualHandEnabled={isVirtualHandEnabled}
+              amputationType={amputationType}
+              leftElbow={leftElbow}
+              rightElbow={rightElbow}
+              leftShoulder={leftShoulder}
+              rightShoulder={rightShoulder}
+            />
+          )}
+        </Suspense>
       </div>
     </div>
   );

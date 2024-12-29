@@ -17,6 +17,8 @@ export const WebcamComponent: React.FC<WebcamComponentProps> = ({
       } transform scale-x-[-1]`}
       autoPlay
       playsInline
+      aria-label="Webcam feed"
+      role="img"
     />
   );
 };
