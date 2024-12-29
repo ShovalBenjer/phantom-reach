@@ -23,6 +23,7 @@ export const PoseDetectionUI: React.FC = () => {
   const fpsIntervalRef = useRef<number>();
   const animationFrameRef = useRef<number>();
   const detectionLoopRef = useRef<boolean>(false);
+  const detectionBufferRef = useRef<boolean[]>([]);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -103,6 +104,16 @@ export const PoseDetectionUI: React.FC = () => {
     }
   };
 
+  const updateDetectionBuffer = (detected: boolean) => {
+    detectionBufferRef.current.push(detected);
+    if (detectionBufferRef.current.length > 10) {
+      detectionBufferRef.current.shift();
+    }
+    
+    const trueCount = detectionBufferRef.current.filter(Boolean).length;
+    return trueCount > detectionBufferRef.current.length / 2;
+  };
+
   const startPoseDetection = async () => {
     if (!videoRef.current || !virtualHandServiceRef.current) {
       console.log('Cannot start detection - missing refs:', {
@@ -122,10 +133,11 @@ export const PoseDetectionUI: React.FC = () => {
       
       try {
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
-        setIsPoseDetected(!!elbows);
+        const isCurrentlyDetected = !!elbows;
+        const isStablyDetected = updateDetectionBuffer(isCurrentlyDetected);
+        setIsPoseDetected(isStablyDetected);
         
-        if (elbows) {
-          console.log('Elbows detected:', elbows);
+        if (elbows && isStablyDetected) {
           virtualHandServiceRef.current?.clearCanvas();
           
           if (amputationType === 'left_arm' || amputationType === 'both') {
@@ -180,13 +192,13 @@ export const PoseDetectionUI: React.FC = () => {
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
           ref={videoRef}
-          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}`}
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
           autoPlay
           playsInline
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          className="absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1]"
           width={640}
           height={480}
         />
