@@ -57,7 +57,6 @@ export const PoseDetectionUI: React.FC = () => {
         });
         
         if (canvasRef.current) {
-          // Set canvas size to match video
           canvasRef.current.width = videoRef.current.videoWidth;
           canvasRef.current.height = videoRef.current.videoHeight;
         }
@@ -148,28 +147,29 @@ export const PoseDetectionUI: React.FC = () => {
           if (ctx) {
             ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             
-            // Save the current context state
-            ctx.save();
+            // Mirror the elbow coordinates
+            const mirroredLeftElbow = elbows.leftElbow ? {
+              ...elbows.leftElbow,
+              x: 1 - elbows.leftElbow.x
+            } : null;
             
-            // Mirror the context horizontally
-            ctx.scale(-1, 1);
-            ctx.translate(-canvasRef.current.width, 0);
+            const mirroredRightElbow = elbows.rightElbow ? {
+              ...elbows.rightElbow,
+              x: 1 - elbows.rightElbow.x
+            } : null;
             
             if (amputationType === 'left_arm' || amputationType === 'both') {
-              virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
+              virtualHandServiceRef.current?.renderHand(mirroredLeftElbow, { 
                 color: 'rgba(255, 0, 0, 0.6)',
                 showVirtualHand: isVirtualHandEnabled 
               });
             }
             if (amputationType === 'right_arm' || amputationType === 'both') {
-              virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
+              virtualHandServiceRef.current?.renderHand(mirroredRightElbow, { 
                 color: 'rgba(0, 255, 0, 0.6)',
                 showVirtualHand: isVirtualHandEnabled 
               });
             }
-            
-            // Restore the context state
-            ctx.restore();
           }
         }
 
@@ -217,7 +217,7 @@ export const PoseDetectionUI: React.FC = () => {
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          className="absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1]"
           width={640}
           height={480}
         />
