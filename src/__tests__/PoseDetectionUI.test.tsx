@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PoseDetectionUI } from '../components/PoseDetectionUI';
-import { vi } from 'vitest';
 
 // Mock the MediaDevices API
 const mockMediaDevices = {
