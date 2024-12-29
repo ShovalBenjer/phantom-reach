@@ -43,10 +43,10 @@ class PoseDetectionService {
   }
 
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
-    if (!this.poseLandmarker || this.isProcessing) return null;
+    if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) return null;
     
     const currentTime = performance.now();
-    if (currentTime - this.lastProcessingTime < 33.33) {
+    if (currentTime - this.lastProcessingTime < 33.33) { // Limit to ~30 FPS
       return null;
     }
 
@@ -66,8 +66,8 @@ class PoseDetectionService {
       if (results?.landmarks?.[0]) {
         const landmarks = results.landmarks[0];
         return {
-          leftElbow: landmarks[13] || null,
-          rightElbow: landmarks[14] || null,
+          leftElbow: landmarks[13] || null,  // Left elbow landmark index
+          rightElbow: landmarks[14] || null, // Right elbow landmark index
         };
       }
       return null;

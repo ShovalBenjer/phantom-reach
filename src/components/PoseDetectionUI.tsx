@@ -21,6 +21,7 @@ export const PoseDetectionUI: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const virtualHandServiceRef = useRef<VirtualHandService | null>(null);
   const fpsIntervalRef = useRef<number>();
+  const animationFrameRef = useRef<number>();
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -30,6 +31,9 @@ export const PoseDetectionUI: React.FC = () => {
       virtualHandServiceRef.current?.dispose();
       if (fpsIntervalRef.current) {
         clearInterval(fpsIntervalRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, []);
@@ -50,11 +54,12 @@ export const PoseDetectionUI: React.FC = () => {
         });
         
         console.log('Webcam stream loaded, initializing pose detection...');
-        setIsWebcamEnabled(true);
         await poseDetectionService.initialize();
+        setIsWebcamEnabled(true);
         setIsDetectionActive(true);
         startPoseDetection();
         
+        // Start FPS counter
         fpsIntervalRef.current = window.setInterval(() => {
           setFps(poseDetectionService.getFPS());
         }, 1000);
@@ -70,10 +75,14 @@ export const PoseDetectionUI: React.FC = () => {
   };
 
   const toggleDetection = () => {
-    setIsDetectionActive(!isDetectionActive);
-    if (!isDetectionActive) {
+    if (isDetectionActive) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    } else {
       startPoseDetection();
     }
+    setIsDetectionActive(!isDetectionActive);
   };
 
   const toggleFullscreen = () => {
@@ -86,33 +95,37 @@ export const PoseDetectionUI: React.FC = () => {
     }
   };
 
-  const startPoseDetection = () => {
+  const startPoseDetection = async () => {
     if (!videoRef.current || !virtualHandServiceRef.current) return;
 
     const detectFrame = async () => {
       if (!isDetectionActive) return;
       
-      const elbows = await poseDetectionService.detectElbows(videoRef.current!);
-      setIsPoseDetected(!!elbows);
-      
-      if (elbows) {
-        virtualHandServiceRef.current?.clearCanvas();
+      try {
+        const elbows = await poseDetectionService.detectElbows(videoRef.current!);
+        setIsPoseDetected(!!elbows);
         
-        if (amputationType === 'left_arm' || amputationType === 'both') {
-          virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
-            color: 'rgba(255, 0, 0, 0.6)',
-            showVirtualHand: true 
-          });
+        if (elbows) {
+          virtualHandServiceRef.current?.clearCanvas();
+          
+          if (amputationType === 'left_arm' || amputationType === 'both') {
+            virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
+              color: 'rgba(255, 0, 0, 0.6)',
+              showVirtualHand: true 
+            });
+          }
+          if (amputationType === 'right_arm' || amputationType === 'both') {
+            virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
+              color: 'rgba(0, 255, 0, 0.6)',
+              showVirtualHand: true 
+            });
+          }
         }
-        if (amputationType === 'right_arm' || amputationType === 'both') {
-          virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
-            color: 'rgba(0, 255, 0, 0.6)',
-            showVirtualHand: true 
-          });
-        }
+      } catch (error) {
+        console.error('Error in pose detection:', error);
       }
 
-      requestAnimationFrame(detectFrame);
+      animationFrameRef.current = requestAnimationFrame(detectFrame);
     };
 
     detectFrame();
