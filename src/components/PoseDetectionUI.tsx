@@ -7,6 +7,7 @@ import { PoseControls } from './pose/PoseControls';
 import { StatusIndicators } from './pose/StatusIndicators';
 import { WebcamComponent } from './pose/WebcamComponent';
 import { usePoseDetection } from '../hooks/usePoseDetection';
+import { DefrostGame } from './game/DefrostGame';
 
 // Lazy load the HandVisualization component
 const HandVisualization = lazy(() => import('./pose/HandVisualization').then(module => ({
@@ -18,6 +19,7 @@ export const PoseDetectionUI: React.FC = () => {
   const [isVirtualHandEnabled, setIsVirtualHandEnabled] = useState(true);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showGame, setShowGame] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,12 @@ export const PoseDetectionUI: React.FC = () => {
         onToggleFullscreen={toggleFullscreen}
         onAmputationTypeChange={setAmputationType}
       />
+
+      {isWebcamEnabled && (
+        <div className="w-full max-w-4xl">
+          <DefrostGame />
+        </div>
+      )}
 
       <div 
         className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}
