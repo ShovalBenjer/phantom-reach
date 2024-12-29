@@ -26,7 +26,7 @@ export const PoseDetectionUI: React.FC = () => {
   const fpsIntervalRef = useRef<number>();
   const animationFrameRef = useRef<number>();
   const detectionLoopRef = useRef<boolean>(false);
-  const bufferSize = 5;
+  const bufferSize = 10; // Increased buffer size for smoother detection
 
   useEffect(() => {
     return () => {
@@ -82,6 +82,11 @@ export const PoseDetectionUI: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      setLeftElbow(null);
+      setRightElbow(null);
+      setLeftShoulder(null);
+      setRightShoulder(null);
+      setPoseBuffer([]);
     } else {
       console.log('Starting detection...');
       startPoseDetection();
@@ -115,10 +120,9 @@ export const PoseDetectionUI: React.FC = () => {
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
         
         if (elbows) {
-          // Update pose buffer for stabilization
           const newBuffer = [...poseBuffer, true].slice(-bufferSize);
           setPoseBuffer(newBuffer);
-          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize / 2);
+          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
           
           setLeftElbow(elbows.leftElbow);
           setRightElbow(elbows.rightElbow);
@@ -127,7 +131,7 @@ export const PoseDetectionUI: React.FC = () => {
         } else {
           const newBuffer = [...poseBuffer, false].slice(-bufferSize);
           setPoseBuffer(newBuffer);
-          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize / 2);
+          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
         }
 
         animationFrameRef.current = requestAnimationFrame(detectFrame);
@@ -168,40 +172,44 @@ export const PoseDetectionUI: React.FC = () => {
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
           ref={videoRef}
-          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}`}
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
           autoPlay
           playsInline
         />
-        {amputationType === 'left_arm' && (
-          <ThreeDHand
-            isEnabled={isVirtualHandEnabled}
-            isDetectionActive={isDetectionActive}
-            elbow={leftElbow}
-            shoulder={leftShoulder}
-          />
-        )}
-        {amputationType === 'right_arm' && (
-          <ThreeDHand
-            isEnabled={isVirtualHandEnabled}
-            isDetectionActive={isDetectionActive}
-            elbow={rightElbow}
-            shoulder={rightShoulder}
-          />
-        )}
-        {amputationType === 'both' && (
+        {isDetectionActive && (
           <>
-            <ThreeDHand
-              isEnabled={isVirtualHandEnabled}
-              isDetectionActive={isDetectionActive}
-              elbow={leftElbow}
-              shoulder={leftShoulder}
-            />
-            <ThreeDHand
-              isEnabled={isVirtualHandEnabled}
-              isDetectionActive={isDetectionActive}
-              elbow={rightElbow}
-              shoulder={rightShoulder}
-            />
+            {amputationType === 'left_arm' && (
+              <ThreeDHand
+                isEnabled={isVirtualHandEnabled}
+                isDetectionActive={isDetectionActive}
+                elbow={leftElbow}
+                shoulder={leftShoulder}
+              />
+            )}
+            {amputationType === 'right_arm' && (
+              <ThreeDHand
+                isEnabled={isVirtualHandEnabled}
+                isDetectionActive={isDetectionActive}
+                elbow={rightElbow}
+                shoulder={rightShoulder}
+              />
+            )}
+            {amputationType === 'both' && (
+              <>
+                <ThreeDHand
+                  isEnabled={isVirtualHandEnabled}
+                  isDetectionActive={isDetectionActive}
+                  elbow={leftElbow}
+                  shoulder={leftShoulder}
+                />
+                <ThreeDHand
+                  isEnabled={isVirtualHandEnabled}
+                  isDetectionActive={isDetectionActive}
+                  elbow={rightElbow}
+                  shoulder={rightShoulder}
+                />
+              </>
+            )}
           </>
         )}
       </div>

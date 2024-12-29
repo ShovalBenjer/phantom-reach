@@ -7,6 +7,8 @@ export class ThreeDHandService {
   private renderer: THREE.WebGLRenderer;
   private hand: THREE.Group;
   private isInitialized: boolean = false;
+  private lastPosition = { x: 0, y: 0, z: 0 };
+  private smoothingFactor = 0.1;
 
   constructor(private container: HTMLDivElement) {
     this.scene = new THREE.Scene();
@@ -23,14 +25,11 @@ export class ThreeDHandService {
     this.renderer.setClearColor(0x000000, 0);
     this.container.appendChild(this.renderer.domElement);
     
-    // Set up camera
     this.camera.position.z = 5;
     
-    // Create hand parts
     this.createHand();
     
-    // Add lighting
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(1, 1, 1);
     this.scene.add(ambientLight);
@@ -40,31 +39,50 @@ export class ThreeDHandService {
   }
 
   private createHand() {
-    // Palm
-    const palmGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-    const palmMaterial = new THREE.MeshPhongMaterial({ color: 0xf0c0a0 });
+    // Create palm
+    const palmGeometry = new THREE.BoxGeometry(0.4, 0.5, 0.2);
+    const palmMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0xf0d0c0,
+      shininess: 30,
+      specular: 0x555555
+    });
     const palm = new THREE.Mesh(palmGeometry, palmMaterial);
     this.hand.add(palm);
 
-    // Fingers
-    const fingerMaterial = new THREE.MeshPhongMaterial({ color: 0xf0c0a0 });
-    for (let i = 0; i < 5; i++) {
+    // Create fingers with joints
+    const fingerMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0xf0d0c0,
+      shininess: 30,
+      specular: 0x555555
+    });
+
+    const fingerPositions = [
+      { x: -0.15, angle: -0.2 }, // Thumb
+      { x: -0.08, angle: 0 },    // Index
+      { x: 0, angle: 0 },        // Middle
+      { x: 0.08, angle: 0 },     // Ring
+      { x: 0.15, angle: 0.2 }    // Pinky
+    ];
+
+    fingerPositions.forEach((pos) => {
       const finger = this.createFinger(fingerMaterial);
-      finger.position.y = 0.2;
-      finger.rotation.z = (Math.PI / 8) * (i - 2);
+      finger.position.x = pos.x;
+      finger.position.y = 0.25;
+      finger.rotation.z = pos.angle;
       this.hand.add(finger);
-    }
+    });
   }
 
   private createFinger(material: THREE.Material) {
     const finger = new THREE.Group();
     
-    // Create finger segments
-    const segmentGeometry = new THREE.CapsuleGeometry(0.05, 0.2, 4, 8);
+    // Create segments with joints
+    const segmentGeometry = new THREE.CapsuleGeometry(0.03, 0.15, 4, 8);
     
     for (let i = 0; i < 3; i++) {
       const segment = new THREE.Mesh(segmentGeometry, material);
-      segment.position.y = i * 0.3;
+      segment.position.y = i * 0.2;
+      segment.rotation.x = -0.1; // Slight curve
       finger.add(segment);
     }
     
@@ -74,23 +92,37 @@ export class ThreeDHandService {
   updateHandPosition(elbow: Landmark, shoulder: Landmark | null) {
     if (!this.isInitialized) return;
 
-    // Convert 2D coordinates to 3D space
-    const x = (elbow.x - 0.5) * 5;
-    const y = -(elbow.y - 0.5) * 5;
-    const z = -elbow.z * 5;
+    // Convert coordinates and apply smoothing
+    const targetX = (elbow.x - 0.5) * 5;
+    const targetY = -(elbow.y - 0.5) * 5;
+    const targetZ = -elbow.z * 5;
 
-    this.hand.position.set(x, y, z);
+    this.lastPosition.x += (targetX - this.lastPosition.x) * this.smoothingFactor;
+    this.lastPosition.y += (targetY - this.lastPosition.y) * this.smoothingFactor;
+    this.lastPosition.z += (targetZ - this.lastPosition.z) * this.smoothingFactor;
 
-    // Calculate rotation based on shoulder position if available
+    this.hand.position.set(
+      this.lastPosition.x,
+      this.lastPosition.y,
+      this.lastPosition.z
+    );
+
+    // Calculate rotation based on shoulder position
     if (shoulder) {
-      const angle = Math.atan2(elbow.y - shoulder.y, elbow.x - shoulder.x);
-      this.hand.rotation.z = angle;
+      const angleX = Math.atan2(elbow.y - shoulder.y, elbow.x - shoulder.x);
+      const angleY = Math.atan2(elbow.z - shoulder.z, elbow.x - shoulder.x);
+      
+      // Smooth rotation
+      this.hand.rotation.x += (angleX - this.hand.rotation.x) * this.smoothingFactor;
+      this.hand.rotation.y += (angleY - this.hand.rotation.y) * this.smoothingFactor;
+      this.hand.rotation.z = angleX;
     }
 
     this.renderer.render(this.scene, this.camera);
   }
 
   setVisible(visible: boolean) {
+    if (!this.isInitialized) return;
     this.hand.visible = visible;
     if (visible) {
       this.renderer.render(this.scene, this.camera);
