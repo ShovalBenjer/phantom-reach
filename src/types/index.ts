@@ -20,9 +20,35 @@ export interface ElbowPositions {
 }
 
 export interface HandStyle {
-  radius?: number;
   color?: string;
+  metalness?: number;
+  roughness?: number;
   showVirtualHand?: boolean;
 }
 
+export interface CalibrationData {
+  armLength: number;
+  shoulderWidth: number;
+  rangeOfMotion: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+}
+
+export type HandModel = 'realistic' | 'robotic' | 'skeletal' | 'cartoon';
+
 export type AmputationType = 'left_arm' | 'right_arm' | 'both';
+
+export interface HandVisualizationProps {
+  isDetectionActive: boolean;
+  isVirtualHandEnabled: boolean;
+  amputationType: AmputationType;
+  leftElbow: Landmark | null;
+  rightElbow: Landmark | null;
+  leftShoulder: Landmark | null;
+  rightShoulder: Landmark | null;
+  handModel: HandModel;
+  calibrationData?: CalibrationData;
+}
