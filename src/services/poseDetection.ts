@@ -61,33 +61,20 @@ class PoseDetectionService {
 
     this.isProcessing = true;
     try {
-      console.log('Detecting poses on video:', {
-        time: currentTime,
-        videoSize: `${video.videoWidth}x${video.videoHeight}`
-      });
-      
       const results = await this.poseLandmarker.detectForVideo(video, currentTime);
       this.lastProcessingTime = currentTime;
       
-      // Update FPS counter
-      this.frameCount++;
-      if (currentTime - this.lastFpsUpdate >= 1000) {
-        this.fps = this.frameCount;
-        this.frameCount = 0;
-        this.lastFpsUpdate = currentTime;
-        console.log('Current FPS:', this.fps);
-      }
+      this.updateFPS(currentTime);
 
       if (results?.landmarks?.[0]) {
-        console.log('Pose landmarks detected:', results.landmarks[0]);
         const landmarks = results.landmarks[0];
         return {
           leftElbow: landmarks[13] || null,  // Left elbow landmark index
           rightElbow: landmarks[14] || null, // Right elbow landmark index
+          landmarks: landmarks, // Include all landmarks
         };
       }
       
-      console.log('No pose detected in results:', results);
       return null;
     } catch (error) {
       console.error('Error detecting poses:', error);
@@ -95,6 +82,16 @@ class PoseDetectionService {
       throw error;
     } finally {
       this.isProcessing = false;
+    }
+  }
+
+  private updateFPS(currentTime: number): void {
+    this.frameCount++;
+    if (currentTime - this.lastFpsUpdate >= 1000) {
+      this.fps = this.frameCount;
+      this.frameCount = 0;
+      this.lastFpsUpdate = currentTime;
+      console.log('Current FPS:', this.fps);
     }
   }
 

@@ -15,6 +15,8 @@ export const PoseDetectionUI: React.FC = () => {
   const [fps, setFps] = useState(0);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [poseBuffer, setPoseBuffer] = useState<boolean[]>([]);
+  const bufferSize = 5; // Adjust this value to change stabilization sensitivity
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -122,20 +124,27 @@ export const PoseDetectionUI: React.FC = () => {
       
       try {
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
-        setIsPoseDetected(!!elbows);
+        
+        // Update pose buffer for stabilization
+        const newBuffer = [...poseBuffer, !!elbows].slice(-bufferSize);
+        setPoseBuffer(newBuffer);
+        const isStablePoseDetected = newBuffer.filter(Boolean).length > bufferSize / 2;
+        setIsPoseDetected(isStablePoseDetected);
         
         if (elbows) {
           console.log('Elbows detected:', elbows);
           virtualHandServiceRef.current?.clearCanvas();
           
           if (amputationType === 'left_arm' || amputationType === 'both') {
-            virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
+            const leftShoulder = elbows.landmarks?.[11] || null; // Left shoulder landmark
+            virtualHandServiceRef.current?.renderHand(elbows.leftElbow, leftShoulder, { 
               color: 'rgba(255, 0, 0, 0.6)',
               showVirtualHand: isVirtualHandEnabled 
             });
           }
           if (amputationType === 'right_arm' || amputationType === 'both') {
-            virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
+            const rightShoulder = elbows.landmarks?.[12] || null; // Right shoulder landmark
+            virtualHandServiceRef.current?.renderHand(elbows.rightElbow, rightShoulder, { 
               color: 'rgba(0, 255, 0, 0.6)',
               showVirtualHand: isVirtualHandEnabled 
             });
