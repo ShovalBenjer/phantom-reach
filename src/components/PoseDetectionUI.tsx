@@ -56,6 +56,12 @@ export const PoseDetectionUI: React.FC = () => {
           }
         });
         
+        if (canvasRef.current) {
+          // Set canvas size to match video
+          canvasRef.current.width = videoRef.current.videoWidth;
+          canvasRef.current.height = videoRef.current.videoHeight;
+        }
+        
         console.log('Webcam stream loaded, initializing pose detection...');
         await poseDetectionService.initialize();
         setIsWebcamEnabled(true);
@@ -137,20 +143,33 @@ export const PoseDetectionUI: React.FC = () => {
         const isStablyDetected = updateDetectionBuffer(isCurrentlyDetected);
         setIsPoseDetected(isStablyDetected);
         
-        if (elbows && isStablyDetected) {
-          virtualHandServiceRef.current?.clearCanvas();
-          
-          if (amputationType === 'left_arm' || amputationType === 'both') {
-            virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
-              color: 'rgba(255, 0, 0, 0.6)',
-              showVirtualHand: isVirtualHandEnabled 
-            });
-          }
-          if (amputationType === 'right_arm' || amputationType === 'both') {
-            virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
-              color: 'rgba(0, 255, 0, 0.6)',
-              showVirtualHand: isVirtualHandEnabled 
-            });
+        if (elbows && isStablyDetected && canvasRef.current) {
+          const ctx = canvasRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            
+            // Save the current context state
+            ctx.save();
+            
+            // Mirror the context horizontally
+            ctx.scale(-1, 1);
+            ctx.translate(-canvasRef.current.width, 0);
+            
+            if (amputationType === 'left_arm' || amputationType === 'both') {
+              virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
+                color: 'rgba(255, 0, 0, 0.6)',
+                showVirtualHand: isVirtualHandEnabled 
+              });
+            }
+            if (amputationType === 'right_arm' || amputationType === 'both') {
+              virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
+                color: 'rgba(0, 255, 0, 0.6)',
+                showVirtualHand: isVirtualHandEnabled 
+              });
+            }
+            
+            // Restore the context state
+            ctx.restore();
           }
         }
 
@@ -198,7 +217,7 @@ export const PoseDetectionUI: React.FC = () => {
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1]"
+          className="absolute top-0 left-0 w-full h-full pointer-events-none"
           width={640}
           height={480}
         />
