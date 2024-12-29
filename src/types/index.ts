@@ -16,14 +16,13 @@ export interface Landmark {
 export interface ElbowPositions {
   leftElbow: Landmark | null;
   rightElbow: Landmark | null;
-  landmarks?: Landmark[]; // Add this line to include all landmarks
+  landmarks?: Landmark[];
 }
 
 export interface HandStyle {
-  color?: string;
-  metalness?: number;
-  roughness?: number;
-  showVirtualHand?: boolean;
+  color: string;
+  metalness: number;
+  roughness: number;
 }
 
 export interface CalibrationData {
@@ -49,6 +48,4 @@ export interface HandVisualizationProps {
   rightElbow: Landmark | null;
   leftShoulder: Landmark | null;
   rightShoulder: Landmark | null;
-  handModel: HandModel;
-  calibrationData?: CalibrationData;
 }

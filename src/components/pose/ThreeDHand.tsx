@@ -1,19 +1,23 @@
 import React, { useEffect, useRef } from 'react';
 import { ThreeDHandService } from '../../services/3dHandService';
-import { Landmark } from '../../types';
+import { Landmark, HandModel, CalibrationData } from '../../types';
 
 interface ThreeDHandProps {
   isEnabled: boolean;
   isDetectionActive: boolean;
   elbow: Landmark | null;
   shoulder: Landmark | null;
+  handModel: HandModel;
+  calibrationData?: CalibrationData;
 }
 
 export const ThreeDHand: React.FC<ThreeDHandProps> = ({
   isEnabled,
   isDetectionActive,
   elbow,
-  shoulder
+  shoulder,
+  handModel,
+  calibrationData
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const serviceRef = useRef<ThreeDHandService | null>(null);
@@ -42,12 +46,13 @@ export const ThreeDHand: React.FC<ThreeDHandProps> = ({
   useEffect(() => {
     if (serviceRef.current) {
       serviceRef.current.setVisible(isEnabled && isDetectionActive);
+      serviceRef.current.updateHandModel(handModel);
       
       if (isEnabled && isDetectionActive && elbow) {
-        serviceRef.current.updateHandPosition(elbow, shoulder);
+        serviceRef.current.updateHandPosition(elbow, shoulder, calibrationData);
       }
     }
-  }, [isEnabled, isDetectionActive, elbow, shoulder]);
+  }, [isEnabled, isDetectionActive, elbow, shoulder, handModel, calibrationData]);
 
   return (
     <div 
