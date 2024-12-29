@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
@@ -9,10 +10,13 @@ import { WEBCAM_CONFIG } from '../config/detection';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
+  const [isPoseDetected, setIsPoseDetected] = useState(false);
+  const [fps, setFps] = useState(0);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const virtualHandServiceRef = useRef<VirtualHandService | null>(null);
+  const fpsIntervalRef = useRef<number>();
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -20,6 +24,9 @@ export const PoseDetectionUI: React.FC = () => {
     }
     return () => {
       virtualHandServiceRef.current?.dispose();
+      if (fpsIntervalRef.current) {
+        clearInterval(fpsIntervalRef.current);
+      }
     };
   }, []);
 
@@ -34,6 +41,11 @@ export const PoseDetectionUI: React.FC = () => {
         setIsWebcamEnabled(true);
         await poseDetectionService.initialize();
         startPoseDetection();
+        
+        // Start FPS counter update
+        fpsIntervalRef.current = window.setInterval(() => {
+          setFps(poseDetectionService.getFPS());
+        }, 1000);
       }
     } catch (error) {
       console.error('Error accessing webcam:', error);
@@ -50,6 +62,8 @@ export const PoseDetectionUI: React.FC = () => {
 
     const detectFrame = async () => {
       const elbows = await poseDetectionService.detectElbows(videoRef.current!);
+      
+      setIsPoseDetected(!!elbows);
       
       if (elbows) {
         virtualHandServiceRef.current?.clearCanvas();
@@ -70,6 +84,16 @@ export const PoseDetectionUI: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center space-y-4 p-6">
+      <div className="flex gap-2 items-center">
+        <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
+          {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
+        </Badge>
+        <Badge variant={isPoseDetected ? "default" : "secondary"}>
+          {isPoseDetected ? "Pose Detected" : "No Pose"}
+        </Badge>
+        <Badge variant="outline">{fps} FPS</Badge>
+      </div>
+
       <Select value={amputationType} onValueChange={(value: AmputationType) => setAmputationType(value)}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select amputation type" />

@@ -1,16 +1,19 @@
-import { PoseDetectionConfig, ElbowPositions } from '../types';
+import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 import { POSE_DETECTION_CONFIG } from '../config/detection';
 import { toast } from '@/components/ui/use-toast';
 
 class PoseDetectionService {
-  private poseLandmarker: any;
+  private poseLandmarker: PoseLandmarker | null = null;
   private lastProcessingTime: number = 0;
   private isProcessing: boolean = false;
+  private fps: number = 0;
+  private lastFpsUpdate: number = 0;
+  private frameCount: number = 0;
 
   async initialize(): Promise<void> {
     try {
       const vision = await FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm'
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
       
       this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
@@ -35,10 +38,11 @@ class PoseDetectionService {
   }
 
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
-    if (this.isProcessing) return null;
+    if (!this.poseLandmarker || this.isProcessing) return null;
     
     const currentTime = performance.now();
-    if (currentTime - this.lastProcessingTime < 16.67) { // ~60fps limit
+    // Throttle to ~30 FPS
+    if (currentTime - this.lastProcessingTime < 33.33) {
       return null;
     }
 
@@ -46,6 +50,14 @@ class PoseDetectionService {
     try {
       const results = await this.poseLandmarker.detectForVideo(video, currentTime);
       this.lastProcessingTime = currentTime;
+      
+      // Update FPS counter
+      this.frameCount++;
+      if (currentTime - this.lastFpsUpdate >= 1000) {
+        this.fps = this.frameCount;
+        this.frameCount = 0;
+        this.lastFpsUpdate = currentTime;
+      }
 
       if (results?.landmarks?.[0]) {
         const landmarks = results.landmarks[0];
@@ -61,6 +73,10 @@ class PoseDetectionService {
     } finally {
       this.isProcessing = false;
     }
+  }
+
+  getFPS(): number {
+    return this.fps;
   }
 }
 
