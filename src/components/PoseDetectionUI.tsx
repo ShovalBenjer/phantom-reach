@@ -99,16 +99,27 @@ export const PoseDetectionUI: React.FC = () => {
   };
 
   const startPoseDetection = async () => {
-    if (!videoRef.current || !virtualHandServiceRef.current) return;
+    if (!videoRef.current || !virtualHandServiceRef.current) {
+      console.log('Cannot start detection - missing refs:', {
+        hasVideoRef: !!videoRef.current,
+        hasVirtualHandRef: !!virtualHandServiceRef.current
+      });
+      return;
+    }
 
     const detectFrame = async () => {
-      if (!isDetectionActive) return;
+      if (!isDetectionActive) {
+        console.log('Detection stopped');
+        return;
+      }
       
       try {
+        console.log('Detecting frame...');
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
         setIsPoseDetected(!!elbows);
         
         if (elbows) {
+          console.log('Elbows detected:', elbows);
           virtualHandServiceRef.current?.clearCanvas();
           
           if (amputationType === 'left_arm' || amputationType === 'both') {
@@ -123,6 +134,8 @@ export const PoseDetectionUI: React.FC = () => {
               showVirtualHand: isVirtualHandEnabled 
             });
           }
+        } else {
+          console.log('No elbows detected');
         }
       } catch (error) {
         console.error('Error in pose detection:', error);

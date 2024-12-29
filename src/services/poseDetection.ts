@@ -43,7 +43,14 @@ class PoseDetectionService {
   }
 
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
-    if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) return null;
+    if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) {
+      console.log('Skipping detection:', {
+        hasLandmarker: !!this.poseLandmarker,
+        isProcessing: this.isProcessing,
+        videoWidth: video.videoWidth
+      });
+      return null;
+    }
     
     const currentTime = performance.now();
     if (currentTime - this.lastProcessingTime < 33.33) { // Limit to ~30 FPS
@@ -52,6 +59,7 @@ class PoseDetectionService {
 
     this.isProcessing = true;
     try {
+      console.log('Detecting poses...');
       const results = await this.poseLandmarker.detectForVideo(video, currentTime);
       this.lastProcessingTime = currentTime;
       
@@ -64,12 +72,13 @@ class PoseDetectionService {
       }
 
       if (results?.landmarks?.[0]) {
-        const landmarks = results.landmarks[0];
+        console.log('Pose detected:', results.landmarks[0]);
         return {
-          leftElbow: landmarks[13] || null,  // Left elbow landmark index
-          rightElbow: landmarks[14] || null, // Right elbow landmark index
+          leftElbow: results.landmarks[0][13] || null,  // Left elbow landmark index
+          rightElbow: results.landmarks[0][14] || null, // Right elbow landmark index
         };
       }
+      console.log('No pose detected in results:', results);
       return null;
     } catch (error) {
       console.error('Error detecting poses:', error);
