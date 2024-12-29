@@ -32,7 +32,7 @@ export class VirtualHandService {
 
       if (showVirtualHand) {
         // Calculate hand position based on elbow angle
-        const handLength = 100; // Length of virtual hand
+        const handLength = 100;
         const angle = Math.atan2(landmark.y - 0.5, landmark.x - 0.5);
         
         const handX = x + Math.cos(angle) * handLength;
@@ -53,8 +53,8 @@ export class VirtualHandService {
 
         // Draw fingers
         const fingerLength = 30;
-        const fingerSpread = Math.PI / 4; // Angle between fingers
-        const baseFingerAngle = angle - (fingerSpread * 2); // Start angle for first finger
+        const fingerSpread = Math.PI / 4;
+        const baseFingerAngle = angle - (fingerSpread * 2);
 
         for (let i = 0; i < 5; i++) {
           const fingerAngle = baseFingerAngle + (fingerSpread * i);

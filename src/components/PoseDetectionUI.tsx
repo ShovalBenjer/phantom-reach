@@ -1,21 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
 import { WEBCAM_CONFIG } from '../config/detection';
+import { PoseControls } from './pose/PoseControls';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
   const [isDetectionActive, setIsDetectionActive] = useState(false);
+  const [isVirtualHandEnabled, setIsVirtualHandEnabled] = useState(true);
   const [isPoseDetected, setIsPoseDetected] = useState(false);
   const [fps, setFps] = useState(0);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +59,6 @@ export const PoseDetectionUI: React.FC = () => {
         setIsDetectionActive(true);
         startPoseDetection();
         
-        // Start FPS counter
         fpsIntervalRef.current = window.setInterval(() => {
           setFps(poseDetectionService.getFPS());
         }, 1000);
@@ -83,6 +82,10 @@ export const PoseDetectionUI: React.FC = () => {
       startPoseDetection();
     }
     setIsDetectionActive(!isDetectionActive);
+  };
+
+  const toggleVirtualHand = () => {
+    setIsVirtualHandEnabled(!isVirtualHandEnabled);
   };
 
   const toggleFullscreen = () => {
@@ -111,13 +114,13 @@ export const PoseDetectionUI: React.FC = () => {
           if (amputationType === 'left_arm' || amputationType === 'both') {
             virtualHandServiceRef.current?.renderHand(elbows.leftElbow, { 
               color: 'rgba(255, 0, 0, 0.6)',
-              showVirtualHand: true 
+              showVirtualHand: isVirtualHandEnabled 
             });
           }
           if (amputationType === 'right_arm' || amputationType === 'both') {
             virtualHandServiceRef.current?.renderHand(elbows.rightElbow, { 
               color: 'rgba(0, 255, 0, 0.6)',
-              showVirtualHand: true 
+              showVirtualHand: isVirtualHandEnabled 
             });
           }
         }
@@ -143,45 +146,18 @@ export const PoseDetectionUI: React.FC = () => {
         <Badge variant="outline">{fps} FPS</Badge>
       </div>
 
-      <div className="flex gap-2">
-        <Select value={amputationType} onValueChange={(value: AmputationType) => setAmputationType(value)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select amputation type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="left_arm">Left Arm</SelectItem>
-            <SelectItem value="right_arm">Right Arm</SelectItem>
-            <SelectItem value="both">Both Arms</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button
-          onClick={toggleFullscreen}
-          variant="outline"
-          size="icon"
-        >
-          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      <div className="flex gap-2">
-        <Button
-          onClick={startWebcam}
-          disabled={isWebcamEnabled}
-          className="bg-primary hover:bg-primary/90"
-        >
-          {isWebcamEnabled ? 'Webcam Enabled' : 'Enable Webcam'}
-        </Button>
-
-        {isWebcamEnabled && (
-          <Button
-            onClick={toggleDetection}
-            variant={isDetectionActive ? "destructive" : "default"}
-          >
-            {isDetectionActive ? 'Stop Detection' : 'Start Detection'}
-          </Button>
-        )}
-      </div>
+      <PoseControls 
+        isWebcamEnabled={isWebcamEnabled}
+        isDetectionActive={isDetectionActive}
+        isVirtualHandEnabled={isVirtualHandEnabled}
+        isFullscreen={isFullscreen}
+        amputationType={amputationType}
+        onStartWebcam={startWebcam}
+        onToggleDetection={toggleDetection}
+        onToggleVirtualHand={toggleVirtualHand}
+        onToggleFullscreen={toggleFullscreen}
+        onAmputationTypeChange={setAmputationType}
+      />
 
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
