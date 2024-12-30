@@ -8,8 +8,10 @@ import { StatusIndicators } from './pose/StatusIndicators';
 import { WebcamComponent } from './pose/WebcamComponent';
 import { usePoseDetection } from '../hooks/usePoseDetection';
 import { DefrostGame } from './game/DefrostGame';
+import { GameIntroduction } from './tutorial/GameIntroduction';
+import { Button } from './ui/button';
+import { Eye, EyeOff } from 'lucide-react';
 
-// Lazy load the HandVisualization component
 const HandVisualization = lazy(() => import('./pose/HandVisualization').then(module => ({
   default: module.HandVisualization
 })));
@@ -20,6 +22,7 @@ export const PoseDetectionUI: React.FC = () => {
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showGame, setShowGame] = useState(false);
+  const [showElbowDetection, setShowElbowDetection] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,11 +89,24 @@ export const PoseDetectionUI: React.FC = () => {
       role="main"
       aria-label="Pose Detection Interface"
     >
+      <GameIntroduction />
+      
       <StatusIndicators
         isWebcamEnabled={isWebcamEnabled}
         isPoseDetected={isPoseDetected}
         fps={fps}
       />
+
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant="outline"
+          onClick={() => setShowElbowDetection(!showElbowDetection)}
+          className="flex items-center gap-2"
+        >
+          {showElbowDetection ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {showElbowDetection ? "Hide" : "Show"} Elbow Detection
+        </Button>
+      </div>
 
       <PoseControls 
         isWebcamEnabled={isWebcamEnabled}
@@ -120,8 +136,32 @@ export const PoseDetectionUI: React.FC = () => {
           videoRef={videoRef}
           isFullscreen={isFullscreen}
         />
+        
+        {showElbowDetection && isPoseDetected && (
+          <div className="absolute inset-0 pointer-events-none">
+            {leftElbow && (
+              <div
+                className="absolute w-4 h-4 bg-green-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  left: `${leftElbow.x * 100}%`,
+                  top: `${leftElbow.y * 100}%`,
+                }}
+              />
+            )}
+            {rightElbow && (
+              <div
+                className="absolute w-4 h-4 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  left: `${rightElbow.x * 100}%`,
+                  top: `${rightElbow.y * 100}%`,
+                }}
+              />
+            )}
+          </div>
+        )}
+        
         <Suspense fallback={<div className="animate-pulse">Loading visualization...</div>}>
-          {isWebcamEnabled && (
+          {isWebcamEnabled && isVirtualHandEnabled && (
             <HandVisualization
               isDetectionActive={isDetectionActive}
               isVirtualHandEnabled={isVirtualHandEnabled}
