@@ -1,102 +1,69 @@
 # Virtual Hand Sculptor
 
-A real-time pose detection application that visualizes virtual hands based on webcam input. This project uses MediaPipe for pose detection and Three.js for 3D hand visualization.
+A real-time pose detection application that visualizes virtual hands based on webcam input, featuring an interactive defrosting game. This project combines advanced pose tracking with gamification elements to create an engaging experience.
 
-## Features
+## Key Features
 
 - Real-time pose detection using webcam input
-- 3D hand visualization that follows user movements
-- Support for different amputation types (left arm, right arm, or both)
-- Fullscreen mode support
-- FPS monitoring
-- Smooth hand movement interpolation
+- 3D hand visualization with multiple unlockable skins
+- Interactive defrosting game with progressive levels
+- Support for different amputation types
+- Performance-optimized with smooth animations
+
+## Game Features
+
+- Multiple difficulty levels with increasing challenges
+- Score-based progression system
+- Unlockable hand skins (realistic, robotic, skeletal)
+- Real-time progress tracking
+- Achievement notifications
 
 ## Technology Stack
 
-- **React + TypeScript**: Frontend framework and type safety
-- **Three.js**: 3D graphics rendering
-- **MediaPipe**: Pose detection
-- **Tailwind CSS**: Styling
-- **shadcn/ui**: UI components
-
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── PoseDetectionUI.tsx     # Main pose detection component
-│   └── pose/
-│       ├── PoseControls.tsx    # UI controls for pose detection
-│       └── ThreeDHand.tsx      # 3D hand visualization component
-├── services/
-│   ├── poseDetection.ts        # Pose detection service
-│   └── 3dHandService.ts        # 3D hand rendering service
-├── config/
-│   └── detection.ts            # Configuration constants
-└── types/
-    └── index.ts                # TypeScript type definitions
-```
+- React + TypeScript
+- Three.js for 3D graphics
+- MediaPipe for pose detection
+- Tailwind CSS + shadcn/ui
+- Vite for fast development
 
 ## Getting Started
 
-1. Clone the repository
+1. Clone and install:
 ```bash
 git clone <repository-url>
-```
-
-2. Install dependencies
-```bash
 npm install
 ```
 
-3. Start the development server
+2. Start development:
 ```bash
 npm run dev
 ```
 
-## Usage Guide
+## Usage
 
-1. **Enable Webcam**
-   - Click the "Enable Webcam" button
-   - Grant webcam permissions when prompted
+1. Enable webcam and grant permissions
+2. Select amputation type preference
+3. Start the defrosting game
+4. Progress through levels to unlock new hand skins
+5. Track your score and achievements
 
-2. **Start Detection**
-   - Click "Start Detection" to begin pose tracking
-   - Select your preferred amputation type (left arm, right arm, or both)
+## Performance
 
-3. **Adjust Settings**
-   - Toggle virtual hand visibility
-   - Use fullscreen mode for better visualization
-   - Monitor FPS for performance
-
-## Configuration
-
-Key settings can be found in `src/config/detection.ts`:
-- Pose detection confidence thresholds
-- Webcam resolution settings
-- Frame processing intervals
+- Optimized frame rate handling
+- Lazy-loaded components
+- Smooth pose data interpolation
+- Efficient 3D rendering
 
 ## Browser Support
 
-- Requires WebGL support for 3D rendering
-- Works best on modern browsers (Chrome, Firefox, Safari)
-- Requires webcam access through `getUserMedia` API
-
-## Performance Considerations
-
-- Targets 30 FPS for pose detection
-- Uses position smoothing for natural hand movement
-- Implements pose detection buffering for stability
-- Optimized 3D rendering with proper resource management
+- Modern browsers (Chrome, Firefox, Safari)
+- WebGL support required
+- Webcam access needed
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions welcome! Please read our contributing guidelines before submitting PRs.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - See LICENSE file for details.
