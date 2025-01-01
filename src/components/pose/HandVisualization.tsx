@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThreeDHand } from './ThreeDHand';
 import { CalibrationSystem, CalibrationData } from './CalibrationSystem';
+import { HandModelSelector, HandModel } from './HandModelSelector';
 import { gestureRecognitionService } from '../../services/gestureRecognition';
 import { toast } from '@/hooks/use-toast';
 import { AmputationType, Landmark } from '../../types';
@@ -26,6 +27,7 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
 }) => {
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibrationData, setCalibrationData] = useState<CalibrationData | null>(null);
+  const [handModel, setHandModel] = useState<HandModel>('realistic');
   const [lastGesture, setLastGesture] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +57,10 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
   return (
     <>
       <div className="absolute top-4 right-4 space-y-4 z-10">
+        <HandModelSelector
+          currentModel={handModel}
+          onModelChange={setHandModel}
+        />
         <button
           onClick={() => setIsCalibrating(true)}
           className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
@@ -77,6 +83,7 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
           isDetectionActive={isDetectionActive}
           elbow={leftElbow}
           shoulder={leftShoulder}
+          handModel={handModel}
           calibrationData={calibrationData}
         />
       )}
@@ -86,8 +93,29 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
           isDetectionActive={isDetectionActive}
           elbow={rightElbow}
           shoulder={rightShoulder}
+          handModel={handModel}
           calibrationData={calibrationData}
         />
+      )}
+      {amputationType === 'both' && (
+        <>
+          <ThreeDHand
+            isEnabled={isVirtualHandEnabled}
+            isDetectionActive={isDetectionActive}
+            elbow={leftElbow}
+            shoulder={leftShoulder}
+            handModel={handModel}
+            calibrationData={calibrationData}
+          />
+          <ThreeDHand
+            isEnabled={isVirtualHandEnabled}
+            isDetectionActive={isDetectionActive}
+            elbow={rightElbow}
+            shoulder={rightShoulder}
+            handModel={handModel}
+            calibrationData={calibrationData}
+          />
+        </>
       )}
     </>
   );
