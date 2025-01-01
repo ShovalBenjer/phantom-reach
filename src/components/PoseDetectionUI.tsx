@@ -92,7 +92,7 @@ export const PoseDetectionUI: React.FC = () => {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm p-4 shadow-md">
         <div className="max-w-md mx-auto">
           <img 
-            src="phantomreachlogo.png" 
+            src="/lovable-uploads/cb4a0533-02e3-47ff-a388-75ca4008048a.png"
             alt="PhantomReach Logo" 
             className="h-16 w-auto mx-auto"
             aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
