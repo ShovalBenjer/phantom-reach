@@ -46,20 +46,24 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
   const handleCalibrationComplete = (data: CalibrationData) => {
     setCalibrationData(data);
     setIsCalibrating(false);
+    toast({
+      title: "Calibration Complete",
+      description: "Your movements have been calibrated for better tracking.",
+    });
   };
 
   if (!isDetectionActive) return null;
 
   return (
     <>
-      <div className="absolute top-4 right-4 space-y-4">
+      <div className="absolute top-4 right-4 space-y-4 z-10">
         <HandModelSelector
           currentModel={handModel}
           onModelChange={setHandModel}
         />
         <button
           onClick={() => setIsCalibrating(true)}
-          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
         >
           Calibrate
         </button>
@@ -81,6 +85,7 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
           shoulder={leftShoulder}
           handModel={handModel}
           calibrationData={calibrationData}
+          isLeftArm={true}
         />
       )}
       {amputationType === 'right_arm' && (
@@ -91,6 +96,7 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
           shoulder={rightShoulder}
           handModel={handModel}
           calibrationData={calibrationData}
+          isLeftArm={false}
         />
       )}
       {amputationType === 'both' && (
@@ -102,6 +108,7 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
             shoulder={leftShoulder}
             handModel={handModel}
             calibrationData={calibrationData}
+            isLeftArm={true}
           />
           <ThreeDHand
             isEnabled={isVirtualHandEnabled}
@@ -110,6 +117,7 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
             shoulder={rightShoulder}
             handModel={handModel}
             calibrationData={calibrationData}
+            isLeftArm={false}
           />
         </>
       )}

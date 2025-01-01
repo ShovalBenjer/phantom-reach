@@ -83,12 +83,41 @@ export class ThreeDHandService {
       roughness: config.roughness,
     });
 
-    // Create palm
-    const palmGeometry = new THREE.BoxGeometry(0.4, 0.5, 0.2);
-    const palm = new THREE.Mesh(palmGeometry, material);
-    this.hand.add(palm);
+    // Create upper arm
+    const upperArmGeometry = new THREE.CylinderGeometry(0.2, 0.15, 1, 32);
+    const upperArm = new THREE.Mesh(upperArmGeometry, material);
+    upperArm.position.y = -0.5;
+    this.hand.add(upperArm);
 
-    // Create fingers
+    // Create elbow joint
+    const elbowGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+    const elbow = new THREE.Mesh(elbowGeometry, material);
+    elbow.position.y = 0;
+    this.hand.add(elbow);
+
+    // Create forearm
+    const forearmGeometry = new THREE.CylinderGeometry(0.15, 0.1, 1, 32);
+    const forearm = new THREE.Mesh(forearmGeometry, material);
+    forearm.position.y = 0.5;
+    this.hand.add(forearm);
+
+    // Create wrist
+    const wristGeometry = new THREE.SphereGeometry(0.12, 32, 32);
+    const wrist = new THREE.Mesh(wristGeometry, material);
+    wrist.position.y = 1;
+    this.hand.add(wrist);
+
+    // Create hand
+    const handGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.1);
+    const handMesh = new THREE.Mesh(handGeometry, material);
+    handMesh.position.y = 1.2;
+    this.hand.add(handMesh);
+
+    // Add fingers
+    this.createFingers(material, handMesh);
+  }
+
+  private createFingers(material: THREE.Material, handMesh: THREE.Mesh) {
     const fingerPositions = [
       { x: -0.15, y: 0.25, angle: -0.2 },
       { x: -0.08, y: 0.25, angle: 0 },
@@ -101,7 +130,7 @@ export class ThreeDHandService {
       const finger = this.createFinger(material);
       finger.position.set(pos.x, pos.y, 0);
       finger.rotation.z = pos.angle;
-      this.hand.add(finger);
+      handMesh.add(finger);
     });
   }
 

@@ -2,29 +2,35 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Camera, Target, Award } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Camera, Target, Award, Heart, Sparkles } from 'lucide-react';
 
 interface Step {
   title: string;
   description: string;
   icon: React.ReactNode;
+  animation?: string;
 }
 
 const tutorialSteps: Step[] = [
   {
     title: "Welcome to Virtual Hand Sculptor",
     description: "Experience innovative rehabilitation through interactive gaming. Our application helps improve motor skills and provides real-time feedback for your recovery journey.",
-    icon: <Award className="w-12 h-12 text-primary" />,
+    icon: <Heart className="w-12 h-12 text-primary animate-pulse" />,
   },
   {
     title: "Camera Setup",
-    description: "Position your camera at chest height and stand about 2 meters back. This helps us accurately track your movements.",
+    description: "Position your camera at chest height and stand about 2 meters back. This helps us accurately track your movements for the best experience.",
     icon: <Camera className="w-12 h-12 text-primary" />,
   },
   {
     title: "Calibration",
-    description: "We'll guide you through a quick calibration process to ensure accurate tracking of your movements.",
+    description: "We'll guide you through a quick calibration process. This helps us understand your range of motion and provide personalized feedback.",
     icon: <Target className="w-12 h-12 text-primary" />,
+  },
+  {
+    title: "Therapeutic Benefits",
+    description: "Regular practice helps improve motor control, range of motion, and muscle memory. Track your progress and celebrate achievements!",
+    icon: <Sparkles className="w-12 h-12 text-primary animate-pulse" />,
   }
 ];
 
@@ -81,6 +87,7 @@ export const GameIntroduction: React.FC = () => {
                 variant="outline"
                 onClick={prevStep}
                 disabled={currentStep === 0}
+                className="flex items-center"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Previous
@@ -88,16 +95,24 @@ export const GameIntroduction: React.FC = () => {
 
               <div className="flex gap-2">
                 {tutorialSteps.map((_, index) => (
-                  <div
+                  <motion.div
                     key={index}
                     className={`h-2 w-2 rounded-full ${
                       index === currentStep ? 'bg-primary' : 'bg-muted'
                     }`}
+                    animate={{
+                      scale: index === currentStep ? [1, 1.2, 1] : 1
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      repeat: index === currentStep ? Infinity : 0,
+                      repeatType: "reverse"
+                    }}
                   />
                 ))}
               </div>
 
-              <Button onClick={nextStep}>
+              <Button onClick={nextStep} className="flex items-center">
                 {currentStep === tutorialSteps.length - 1 ? (
                   "Get Started"
                 ) : (
