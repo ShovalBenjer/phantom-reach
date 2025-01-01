@@ -39,9 +39,8 @@ export const PoseControls: React.FC<PoseControlsProps> = ({
               <SelectValue placeholder="Select amputation type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="left_arm">Left Arm</SelectItem>
-              <SelectItem value="right_arm">Right Arm</SelectItem>
-              <SelectItem value="both">Both Arms</SelectItem>
+              <SelectItem value="left_arm">I have Left Arm Amputation</SelectItem>
+              <SelectItem value="right_arm">I have Right Arm Amputation</SelectItem>
             </SelectContent>
           </Select>
 

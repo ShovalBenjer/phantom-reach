@@ -121,7 +121,7 @@ export const PoseDetectionUI: React.FC = () => {
           className="flex items-center gap-2"
         >
           {showElbowDetection ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {showElbowDetection ? "Hide" : "Show"} Elbow Detection
+          {showElbowDetection ? "Hide" : "Show"} Amputated Arm Detection
         </Button>
       </div>
 
