@@ -89,16 +89,20 @@ export const PoseDetectionUI: React.FC = () => {
       role="main"
       aria-label="Pose Detection Interface"
     >
-      <div className="w-full max-w-md mb-8">
-        <img 
-          src="/phantom-reach-logo.png" 
-          alt="PhantomReach Logo" 
-          className="w-full h-auto"
-          aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
-        />
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm p-4 shadow-md">
+        <div className="max-w-md mx-auto">
+          <img 
+            src="/phantom-reach-logo.png" 
+            alt="PhantomReach Logo" 
+            className="h-16 w-auto mx-auto"
+            aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
+          />
+        </div>
       </div>
 
-      <GameIntroduction />
+      <div className="mt-24"> {/* Add margin to account for fixed header */}
+        <GameIntroduction />
+      </div>
       
       <StatusIndicators
         isWebcamEnabled={isWebcamEnabled}
