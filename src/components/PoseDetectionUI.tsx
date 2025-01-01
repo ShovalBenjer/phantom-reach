@@ -1,42 +1,61 @@
-import React, { useRef, useState, lazy, Suspense } from 'react';
-import { toast } from '@/hooks/use-toast';
+/**
+ * @component PoseDetectionUI
+ * @description Main component that orchestrates webcam input, pose detection, and hand visualization.
+ * Manages the webcam stream, pose detection state, and coordinates between different services.
+ * 
+ * @state isWebcamEnabled - Controls webcam activation state
+ * @state isDetectionActive - Manages pose detection status
+ * @state isVirtualHandEnabled - Controls virtual hand visibility
+ * @state isPoseDetected - Indicates if a pose is currently detected
+ * @state fps - Current frames per second of pose detection
+ * @state amputationType - Selected amputation type ('left_arm', 'right_arm', 'both')
+ * 
+ * @uses PoseControls - Component for UI controls
+ * @uses ThreeDHand - Component for 3D hand visualization
+ * @uses poseDetectionService - Service for pose detection
+ */
+
+import React, { useEffect, useRef, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { toast } from '@/components/ui/use-toast';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { WEBCAM_CONFIG } from '../config/detection';
 import { PoseControls } from './pose/PoseControls';
-import { StatusIndicators } from './pose/StatusIndicators';
-import { WebcamComponent } from './pose/WebcamComponent';
-import { usePoseDetection } from '../hooks/usePoseDetection';
-import { DefrostGame } from './game/DefrostGame';
-import { GameIntroduction } from './tutorial/GameIntroduction';
-import { Button } from './ui/button';
-import { Eye, EyeOff } from 'lucide-react';
-
-const HandVisualization = lazy(() => import('./pose/HandVisualization').then(module => ({
-  default: module.HandVisualization
-})));
+import { ThreeDHand } from './pose/ThreeDHand';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
+  const [isDetectionActive, setIsDetectionActive] = useState(false);
   const [isVirtualHandEnabled, setIsVirtualHandEnabled] = useState(true);
+  const [isPoseDetected, setIsPoseDetected] = useState(false);
+  const [fps, setFps] = useState(0);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showGame, setShowGame] = useState(false);
-  const [showElbowDetection, setShowElbowDetection] = useState(false);
+  const [poseBuffer, setPoseBuffer] = useState<boolean[]>([]);
+  const [leftElbow, setLeftElbow] = useState(null);
+  const [rightElbow, setRightElbow] = useState(null);
+  const [leftShoulder, setLeftShoulder] = useState(null);
+  const [rightShoulder, setRightShoulder] = useState(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fpsIntervalRef = useRef<number>();
+  const animationFrameRef = useRef<number>();
+  const detectionLoopRef = useRef<boolean>(false);
+  const bufferSize = 10; // Increased buffer size for smoother detection
 
-  const {
-    isDetectionActive,
-    isPoseDetected,
-    fps,
-    leftElbow,
-    rightElbow,
-    leftShoulder,
-    rightShoulder,
-    toggleDetection,
-  } = usePoseDetection(videoRef);
+  useEffect(() => {
+    return () => {
+      if (fpsIntervalRef.current) {
+        clearInterval(fpsIntervalRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      detectionLoopRef.current = false;
+    };
+  }, []);
 
   const startWebcam = async () => {
     try {
@@ -56,7 +75,12 @@ export const PoseDetectionUI: React.FC = () => {
         console.log('Webcam stream loaded, initializing pose detection...');
         await poseDetectionService.initialize();
         setIsWebcamEnabled(true);
-        toggleDetection();
+        setIsDetectionActive(true);
+        startPoseDetection();
+        
+        fpsIntervalRef.current = window.setInterval(() => {
+          setFps(poseDetectionService.getFPS());
+        }, 1000);
       }
     } catch (error) {
       console.error('Error accessing webcam:', error);
@@ -66,6 +90,25 @@ export const PoseDetectionUI: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const toggleDetection = () => {
+    if (isDetectionActive) {
+      console.log('Stopping detection...');
+      detectionLoopRef.current = false;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      setLeftElbow(null);
+      setRightElbow(null);
+      setLeftShoulder(null);
+      setRightShoulder(null);
+      setPoseBuffer([]);
+    } else {
+      console.log('Starting detection...');
+      startPoseDetection();
+    }
+    setIsDetectionActive(!isDetectionActive);
   };
 
   const toggleVirtualHand = () => {
@@ -82,30 +125,52 @@ export const PoseDetectionUI: React.FC = () => {
     }
   };
 
-  return (
-    <div 
-      ref={containerRef} 
-      className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}
-      role="main"
-      aria-label="Pose Detection Interface"
-    >
-      <GameIntroduction />
-      
-      <StatusIndicators
-        isWebcamEnabled={isWebcamEnabled}
-        isPoseDetected={isPoseDetected}
-        fps={fps}
-      />
+  const startPoseDetection = async () => {
+    if (!videoRef.current) return;
 
-      <div className="flex gap-2 mb-4">
-        <Button
-          variant="outline"
-          onClick={() => setShowElbowDetection(!showElbowDetection)}
-          className="flex items-center gap-2"
-        >
-          {showElbowDetection ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {showElbowDetection ? "Hide" : "Show"} Elbow Detection
-        </Button>
+    detectionLoopRef.current = true;
+
+    const detectFrame = async () => {
+      if (!detectionLoopRef.current) return;
+      
+      try {
+        const elbows = await poseDetectionService.detectElbows(videoRef.current!);
+        
+        if (elbows) {
+          const newBuffer = [...poseBuffer, true].slice(-bufferSize);
+          setPoseBuffer(newBuffer);
+          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
+          
+          setLeftElbow(elbows.leftElbow);
+          setRightElbow(elbows.rightElbow);
+          setLeftShoulder(elbows.landmarks?.[11] || null);
+          setRightShoulder(elbows.landmarks?.[12] || null);
+        } else {
+          const newBuffer = [...poseBuffer, false].slice(-bufferSize);
+          setPoseBuffer(newBuffer);
+          setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
+        }
+
+        animationFrameRef.current = requestAnimationFrame(detectFrame);
+      } catch (error) {
+        console.error('Error in pose detection:', error);
+        detectionLoopRef.current = false;
+      }
+    };
+
+    detectFrame();
+  };
+
+  return (
+    <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
+      <div className="flex gap-2 items-center">
+        <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
+          {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
+        </Badge>
+        <Badge variant={isPoseDetected ? "default" : "secondary"}>
+          {isPoseDetected ? "Pose Detected" : "No Pose"}
+        </Badge>
+        <Badge variant="outline">{fps} FPS</Badge>
       </div>
 
       <PoseControls 
@@ -121,59 +186,51 @@ export const PoseDetectionUI: React.FC = () => {
         onAmputationTypeChange={setAmputationType}
       />
 
-      {isWebcamEnabled && (
-        <div className="w-full max-w-4xl">
-          <DefrostGame />
-        </div>
-      )}
-
-      <div 
-        className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}
-        role="region"
-        aria-label="Visualization Area"
-      >
-        <WebcamComponent
-          videoRef={videoRef}
-          isFullscreen={isFullscreen}
+      <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
+        <video
+          ref={videoRef}
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
+          autoPlay
+          playsInline
         />
-        
-        {showElbowDetection && isPoseDetected && (
-          <div className="absolute inset-0 pointer-events-none">
-            {leftElbow && (
-              <div
-                className="absolute w-4 h-4 bg-green-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  left: `${leftElbow.x * 100}%`,
-                  top: `${leftElbow.y * 100}%`,
-                }}
+        {isDetectionActive && (
+          <>
+            {amputationType === 'left_arm' && (
+              <ThreeDHand
+                isEnabled={isVirtualHandEnabled}
+                isDetectionActive={isDetectionActive}
+                elbow={leftElbow}
+                shoulder={leftShoulder}
               />
             )}
-            {rightElbow && (
-              <div
-                className="absolute w-4 h-4 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  left: `${rightElbow.x * 100}%`,
-                  top: `${rightElbow.y * 100}%`,
-                }}
+            {amputationType === 'right_arm' && (
+              <ThreeDHand
+                isEnabled={isVirtualHandEnabled}
+                isDetectionActive={isDetectionActive}
+                elbow={rightElbow}
+                shoulder={rightShoulder}
               />
             )}
-          </div>
+            {amputationType === 'both' && (
+              <>
+                <ThreeDHand
+                  isEnabled={isVirtualHandEnabled}
+                  isDetectionActive={isDetectionActive}
+                  elbow={leftElbow}
+                  shoulder={leftShoulder}
+                />
+                <ThreeDHand
+                  isEnabled={isVirtualHandEnabled}
+                  isDetectionActive={isDetectionActive}
+                  elbow={rightElbow}
+                  shoulder={rightShoulder}
+                />
+              </>
+            )}
+          </>
         )}
-        
-        <Suspense fallback={<div className="animate-pulse">Loading visualization...</div>}>
-          {isWebcamEnabled && isVirtualHandEnabled && (
-            <HandVisualization
-              isDetectionActive={isDetectionActive}
-              isVirtualHandEnabled={isVirtualHandEnabled}
-              amputationType={amputationType}
-              leftElbow={leftElbow}
-              rightElbow={rightElbow}
-              leftShoulder={leftShoulder}
-              rightShoulder={rightShoulder}
-            />
-          )}
-        </Suspense>
       </div>
     </div>
   );
 };
+

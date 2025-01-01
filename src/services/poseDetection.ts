@@ -10,8 +10,6 @@ class PoseDetectionService {
   private fps: number = 0;
   private lastFpsUpdate: number = 0;
   private frameCount: number = 0;
-  private frameBuffer: Array<ElbowPositions | null> = [];
-  private readonly BUFFER_SIZE = 5;
 
   async initialize(): Promise<void> {
     try {
@@ -44,38 +42,15 @@ class PoseDetectionService {
     }
   }
 
-  private smoothPoseData(currentPose: ElbowPositions | null): ElbowPositions | null {
-    this.frameBuffer.push(currentPose);
-    if (this.frameBuffer.length > this.BUFFER_SIZE) {
-      this.frameBuffer.shift();
-    }
-
-    if (this.frameBuffer.length < this.BUFFER_SIZE) {
-      return currentPose;
-    }
-
-    const validFrames = this.frameBuffer.filter(frame => frame !== null) as ElbowPositions[];
-    if (validFrames.length === 0) return null;
-
-    const smoothedPose: ElbowPositions = {
-      leftElbow: validFrames[0].leftElbow ? {
-        x: validFrames.reduce((sum, frame) => sum + (frame.leftElbow?.x || 0), 0) / validFrames.length,
-        y: validFrames.reduce((sum, frame) => sum + (frame.leftElbow?.y || 0), 0) / validFrames.length,
-        z: validFrames.reduce((sum, frame) => sum + (frame.leftElbow?.z || 0), 0) / validFrames.length,
-      } : null,
-      rightElbow: validFrames[0].rightElbow ? {
-        x: validFrames.reduce((sum, frame) => sum + (frame.rightElbow?.x || 0), 0) / validFrames.length,
-        y: validFrames.reduce((sum, frame) => sum + (frame.rightElbow?.y || 0), 0) / validFrames.length,
-        z: validFrames.reduce((sum, frame) => sum + (frame.rightElbow?.z || 0), 0) / validFrames.length,
-      } : null,
-      landmarks: validFrames[0].landmarks
-    };
-
-    return smoothedPose;
-  }
-
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
     if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) {
+      console.log('Skipping detection:', {
+        hasLandmarker: !!this.poseLandmarker,
+        isProcessing: this.isProcessing,
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        videoReadyState: video.readyState
+      });
       return null;
     }
     
@@ -92,16 +67,15 @@ class PoseDetectionService {
       this.updateFPS(currentTime);
 
       if (results?.landmarks?.[0]) {
-        const rawPose = {
-          leftElbow: results.landmarks[0][13] || null,
-          rightElbow: results.landmarks[0][14] || null,
-          landmarks: results.landmarks[0],
+        const landmarks = results.landmarks[0];
+        return {
+          leftElbow: landmarks[13] || null,  // Left elbow landmark index
+          rightElbow: landmarks[14] || null, // Right elbow landmark index
+          landmarks: landmarks, // Include all landmarks
         };
-        
-        return this.smoothPoseData(rawPose);
       }
       
-      return this.smoothPoseData(null);
+      return null;
     } catch (error) {
       console.error('Error detecting poses:', error);
       this.isProcessing = false;

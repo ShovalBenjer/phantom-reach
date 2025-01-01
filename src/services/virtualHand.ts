@@ -4,7 +4,7 @@ export class VirtualHandService {
   private ctx: CanvasRenderingContext2D;
   private requestId: number | null = null;
   private lastPose: { x: number; y: number } | null = null;
-  private smoothingFactor = 0.3;
+  private smoothingFactor = 0.3; // Adjust for more/less smoothing
 
   constructor(private canvas: HTMLCanvasElement) {
     const context = canvas.getContext('2d');
@@ -16,18 +16,12 @@ export class VirtualHandService {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  renderHand(landmark: Landmark | null, shoulderLandmark: Landmark | null, style: HandStyle): void {
+  renderHand(landmark: Landmark | null, shoulderLandmark: Landmark | null, style: HandStyle = {}): void {
     if (!landmark) return;
 
-    const defaultStyle: HandStyle = {
-      radius: 15,
-      color: 'rgba(0, 255, 0, 0.6)',
-      metalness: 0.5,
-      roughness: 0.5,
-      showVirtualHand: false,
-      ...style
-    };
+    const { radius = 15, color = 'rgba(0, 255, 0, 0.6)', showVirtualHand = false } = style;
     
+    // Apply position smoothing
     let x = landmark.x * this.canvas.width;
     let y = landmark.y * this.canvas.height;
     
@@ -43,11 +37,11 @@ export class VirtualHandService {
     this.requestId = requestAnimationFrame(() => {
       // Draw elbow point
       this.ctx.beginPath();
-      this.ctx.arc(x, y, defaultStyle.radius || 15, 0, 2 * Math.PI);
-      this.ctx.fillStyle = defaultStyle.color;
+      this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      this.ctx.fillStyle = color;
       this.ctx.fill();
 
-      if (defaultStyle.showVirtualHand) {
+      if (showVirtualHand) {
         // Calculate hand angle based on shoulder if available
         let angle;
         if (shoulderLandmark) {
@@ -63,7 +57,7 @@ export class VirtualHandService {
         const handY = y + Math.sin(angle) * handLength;
 
         // Draw modern hand
-        this.drawModernHand(x, y, handX, handY, angle, defaultStyle.color);
+        this.drawModernHand(x, y, handX, handY, angle, color);
       }
     });
   }
