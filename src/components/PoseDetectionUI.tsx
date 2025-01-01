@@ -92,15 +92,20 @@ export const PoseDetectionUI: React.FC = () => {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm p-4 shadow-md">
         <div className="max-w-md mx-auto">
           <img 
-            src="/phantom-reach-logo.png" 
+            src="phantom-reach-logo.png" 
             alt="PhantomReach Logo" 
             className="h-16 w-auto mx-auto"
             aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
+            onError={(e) => {
+              console.error('Image failed to load:', e);
+              // Fallback to placeholder if image fails to load
+              e.currentTarget.src = 'placeholder.svg';
+            }}
           />
         </div>
       </div>
 
-      <div className="mt-24"> {/* Add margin to account for fixed header */}
+      <div className="mt-24">
         <GameIntroduction />
       </div>
       
