@@ -1,102 +1,69 @@
-# Virtual Hand Sculptor
+# Welcome to your Lovable project
 
-A real-time pose detection application that visualizes virtual hands based on webcam input. This project uses MediaPipe for pose detection and Three.js for 3D hand visualization.
+## Project info
 
-## Features
+**URL**: https://lovable.dev/projects/a94ed8c8-816d-429a-b9c4-3f7920aed3fd
 
-- Real-time pose detection using webcam input
-- 3D hand visualization that follows user movements
-- Support for different amputation types (left arm, right arm, or both)
-- Fullscreen mode support
-- FPS monitoring
-- Smooth hand movement interpolation
+## How can I edit this code?
 
-## Technology Stack
+There are several ways of editing your application.
 
-- **React + TypeScript**: Frontend framework and type safety
-- **Three.js**: 3D graphics rendering
-- **MediaPipe**: Pose detection
-- **Tailwind CSS**: Styling
-- **shadcn/ui**: UI components
+**Use Lovable**
 
-## Project Structure
+Simply visit the [Lovable Project](https://lovable.dev/projects/a94ed8c8-816d-429a-b9c4-3f7920aed3fd) and start prompting.
 
-```
-src/
-├── components/
-│   ├── PoseDetectionUI.tsx     # Main pose detection component
-│   └── pose/
-│       ├── PoseControls.tsx    # UI controls for pose detection
-│       └── ThreeDHand.tsx      # 3D hand visualization component
-├── services/
-│   ├── poseDetection.ts        # Pose detection service
-│   └── 3dHandService.ts        # 3D hand rendering service
-├── config/
-│   └── detection.ts            # Configuration constants
-└── types/
-    └── index.ts                # TypeScript type definitions
-```
+Changes made via Lovable will be committed automatically to this repo.
 
-## Getting Started
+**Use your preferred IDE**
 
-1. Clone the repository
-```bash
-git clone <repository-url>
-```
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-2. Install dependencies
-```bash
-npm install
-```
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-3. Start the development server
-```bash
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-## Usage Guide
+**Edit a file directly in GitHub**
 
-1. **Enable Webcam**
-   - Click the "Enable Webcam" button
-   - Grant webcam permissions when prompted
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-2. **Start Detection**
-   - Click "Start Detection" to begin pose tracking
-   - Select your preferred amputation type (left arm, right arm, or both)
+**Use GitHub Codespaces**
 
-3. **Adjust Settings**
-   - Toggle virtual hand visibility
-   - Use fullscreen mode for better visualization
-   - Monitor FPS for performance
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## Configuration
+## What technologies are used for this project?
 
-Key settings can be found in `src/config/detection.ts`:
-- Pose detection confidence thresholds
-- Webcam resolution settings
-- Frame processing intervals
+This project is built with .
 
-## Browser Support
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-- Requires WebGL support for 3D rendering
-- Works best on modern browsers (Chrome, Firefox, Safari)
-- Requires webcam access through `getUserMedia` API
+## How can I deploy this project?
 
-## Performance Considerations
+Simply open [Lovable](https://lovable.dev/projects/a94ed8c8-816d-429a-b9c4-3f7920aed3fd) and click on Share -> Publish.
 
-- Targets 30 FPS for pose detection
-- Uses position smoothing for natural hand movement
-- Implements pose detection buffering for stability
-- Optimized 3D rendering with proper resource management
+## I want to use a custom domain - is that possible?
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)

@@ -16,7 +16,6 @@ export interface Landmark {
 export interface ElbowPositions {
   leftElbow: Landmark | null;
   rightElbow: Landmark | null;
-  landmarks?: Landmark[]; // Add this line to include all landmarks
 }
 
 export interface HandStyle {
