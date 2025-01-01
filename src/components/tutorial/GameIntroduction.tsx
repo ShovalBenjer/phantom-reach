@@ -13,7 +13,7 @@ interface Step {
 
 const tutorialSteps: Step[] = [
   {
-    title: "Welcome to Virtual Hand Sculptor",
+    title: "Welcome to PhantomReach",
     description: "Experience innovative rehabilitation through interactive gaming. Our application helps improve motor skills and provides real-time feedback for your recovery journey.",
     icon: <Heart className="w-12 h-12 text-primary animate-pulse" />,
   },

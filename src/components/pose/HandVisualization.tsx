@@ -85,7 +85,6 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
           shoulder={leftShoulder}
           handModel={handModel}
           calibrationData={calibrationData}
-          isLeftArm={true}
         />
       )}
       {amputationType === 'right_arm' && (
@@ -96,7 +95,6 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
           shoulder={rightShoulder}
           handModel={handModel}
           calibrationData={calibrationData}
-          isLeftArm={false}
         />
       )}
       {amputationType === 'both' && (
@@ -108,7 +106,6 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
             shoulder={leftShoulder}
             handModel={handModel}
             calibrationData={calibrationData}
-            isLeftArm={true}
           />
           <ThreeDHand
             isEnabled={isVirtualHandEnabled}
@@ -117,7 +114,6 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
             shoulder={rightShoulder}
             handModel={handModel}
             calibrationData={calibrationData}
-            isLeftArm={false}
           />
         </>
       )}
