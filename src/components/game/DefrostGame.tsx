@@ -20,6 +20,7 @@ const LEVELS: Level[] = [
 ];
 
 export const DefrostGame: React.FC = () => {
+  const [showGame, setShowGame] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [score, setScore] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(LEVELS[0]);
@@ -85,6 +86,20 @@ export const DefrostGame: React.FC = () => {
       });
     }
   };
+
+  if (!showGame) {
+    return (
+      <div className="flex flex-col items-center space-y-6 p-4">
+        <Button
+          onClick={() => setShowGame(true)}
+          className="px-8 py-4 text-lg hover:scale-105 transition-transform"
+        >
+          <Play className="mr-2" />
+          Start Game
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center space-y-6 p-4 animate-fade-in">
