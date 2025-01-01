@@ -89,6 +89,15 @@ export const PoseDetectionUI: React.FC = () => {
       role="main"
       aria-label="Pose Detection Interface"
     >
+      <div className="w-full max-w-md mb-8">
+        <img 
+          src="/phantom-reach-logo.png" 
+          alt="PhantomReach Logo" 
+          className="w-full h-auto"
+          aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
+        />
+      </div>
+
       <GameIntroduction />
       
       <StatusIndicators
