@@ -19,8 +19,12 @@ export const usePoseDetection = (videoRef: React.RefObject<HTMLVideoElement>) =>
   const bufferSize = 10;
 
   const startPoseDetection = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current) {
+      console.log('[PoseDetection] Video ref not available');
+      return;
+    }
 
+    console.log('[PoseDetection] Starting detection loop');
     detectionLoopRef.current = true;
 
     const detectFrame = async () => {
@@ -30,6 +34,7 @@ export const usePoseDetection = (videoRef: React.RefObject<HTMLVideoElement>) =>
         const elbows = await poseDetectionService.detectElbows(videoRef.current!);
         
         if (elbows) {
+          console.log('[PoseDetection] Detected elbows:', elbows);
           const newBuffer = [...poseBuffer, true].slice(-bufferSize);
           setPoseBuffer(newBuffer);
           setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
@@ -39,6 +44,7 @@ export const usePoseDetection = (videoRef: React.RefObject<HTMLVideoElement>) =>
           setLeftShoulder(elbows.landmarks?.[11] || null);
           setRightShoulder(elbows.landmarks?.[12] || null);
         } else {
+          console.log('[PoseDetection] No elbows detected in this frame');
           const newBuffer = [...poseBuffer, false].slice(-bufferSize);
           setPoseBuffer(newBuffer);
           setIsPoseDetected(newBuffer.filter(Boolean).length > bufferSize * 0.7);
@@ -46,7 +52,7 @@ export const usePoseDetection = (videoRef: React.RefObject<HTMLVideoElement>) =>
 
         animationFrameRef.current = requestAnimationFrame(detectFrame);
       } catch (error) {
-        console.error('Error in pose detection:', error);
+        console.error('[PoseDetection] Error in detection loop:', error);
         detectionLoopRef.current = false;
         toast({
           title: "Detection Error",

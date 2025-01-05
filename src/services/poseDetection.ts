@@ -10,12 +10,10 @@ class PoseDetectionService {
   private fps: number = 0;
   private lastFpsUpdate: number = 0;
   private frameCount: number = 0;
-  private frameBuffer: Array<ElbowPositions | null> = [];
-  private readonly BUFFER_SIZE = 5;
 
   async initialize(): Promise<void> {
     try {
-      console.log('Initializing pose detection with config:', POSE_DETECTION_CONFIG);
+      console.log('[PoseDetection] Initializing with config:', POSE_DETECTION_CONFIG);
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
@@ -32,9 +30,9 @@ class PoseDetectionService {
         minTrackingConfidence: POSE_DETECTION_CONFIG.minTrackingConfidence,
       });
 
-      console.log('Pose detection initialized successfully:', this.poseLandmarker);
+      console.log('[PoseDetection] Successfully initialized pose landmarker:', this.poseLandmarker);
     } catch (error) {
-      console.error('Failed to initialize pose detection:', error);
+      console.error('[PoseDetection] Initialization failed:', error);
       toast({
         title: "Error",
         description: "Failed to initialize pose detection. Please check your connection and try again.",
@@ -44,66 +42,49 @@ class PoseDetectionService {
     }
   }
 
-  private smoothPoseData(currentPose: ElbowPositions | null): ElbowPositions | null {
-    this.frameBuffer.push(currentPose);
-    if (this.frameBuffer.length > this.BUFFER_SIZE) {
-      this.frameBuffer.shift();
-    }
-
-    if (this.frameBuffer.length < this.BUFFER_SIZE) {
-      return currentPose;
-    }
-
-    const validFrames = this.frameBuffer.filter(frame => frame !== null) as ElbowPositions[];
-    if (validFrames.length === 0) return null;
-
-    const smoothedPose: ElbowPositions = {
-      leftElbow: validFrames[0].leftElbow ? {
-        x: validFrames.reduce((sum, frame) => sum + (frame.leftElbow?.x || 0), 0) / validFrames.length,
-        y: validFrames.reduce((sum, frame) => sum + (frame.leftElbow?.y || 0), 0) / validFrames.length,
-        z: validFrames.reduce((sum, frame) => sum + (frame.leftElbow?.z || 0), 0) / validFrames.length,
-      } : null,
-      rightElbow: validFrames[0].rightElbow ? {
-        x: validFrames.reduce((sum, frame) => sum + (frame.rightElbow?.x || 0), 0) / validFrames.length,
-        y: validFrames.reduce((sum, frame) => sum + (frame.rightElbow?.y || 0), 0) / validFrames.length,
-        z: validFrames.reduce((sum, frame) => sum + (frame.rightElbow?.z || 0), 0) / validFrames.length,
-      } : null,
-      landmarks: validFrames[0].landmarks
-    };
-
-    return smoothedPose;
-  }
-
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
     if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) {
+      console.log('[PoseDetection] Skipping detection:', {
+        hasLandmarker: !!this.poseLandmarker,
+        isProcessing: this.isProcessing,
+        videoWidth: video.videoWidth
+      });
       return null;
     }
     
     const currentTime = performance.now();
-    if (currentTime - this.lastProcessingTime < 33.33) { // Limit to ~30 FPS
+    if (currentTime - this.lastProcessingTime < 33.33) {
       return null;
     }
 
     this.isProcessing = true;
     try {
+      console.log('[PoseDetection] Processing frame at time:', currentTime);
       const results = await this.poseLandmarker.detectForVideo(video, currentTime);
       this.lastProcessingTime = currentTime;
       
       this.updateFPS(currentTime);
 
       if (results?.landmarks?.[0]) {
-        const rawPose = {
-          leftElbow: results.landmarks[0][13] || null,
-          rightElbow: results.landmarks[0][14] || null,
-          landmarks: results.landmarks[0],
+        const landmarks = results.landmarks[0];
+        console.log('[PoseDetection] Detected landmarks:', {
+          leftElbow: landmarks[13],
+          rightElbow: landmarks[14],
+          leftShoulder: landmarks[11],
+          rightShoulder: landmarks[12]
+        });
+
+        return {
+          leftElbow: landmarks[13] || null,
+          rightElbow: landmarks[14] || null,
+          landmarks: landmarks,
         };
-        
-        return this.smoothPoseData(rawPose);
       }
       
-      return this.smoothPoseData(null);
+      console.log('[PoseDetection] No landmarks detected in this frame');
+      return null;
     } catch (error) {
-      console.error('Error detecting poses:', error);
+      console.error('[PoseDetection] Error detecting poses:', error);
       this.isProcessing = false;
       throw error;
     } finally {
@@ -117,7 +98,7 @@ class PoseDetectionService {
       this.fps = this.frameCount;
       this.frameCount = 0;
       this.lastFpsUpdate = currentTime;
-      console.log('Current FPS:', this.fps);
+      console.log('[PoseDetection] Current FPS:', this.fps);
     }
   }
 
