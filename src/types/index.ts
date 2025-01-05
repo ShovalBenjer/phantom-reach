@@ -16,6 +16,8 @@ export interface Landmark {
 export interface ElbowPositions {
   leftElbow: Landmark | null;
   rightElbow: Landmark | null;
+  leftShoulder: Landmark | null;
+  rightShoulder: Landmark | null;
   landmarks?: Landmark[];
 }
 
