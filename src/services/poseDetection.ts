@@ -10,6 +10,8 @@ class PoseDetectionService {
   private fps: number = 0;
   private lastFpsUpdate: number = 0;
   private frameCount: number = 0;
+  private detectionBuffer: ElbowPositions[] = [];
+  private readonly bufferSize = 3;
 
   async initialize(): Promise<void> {
     try {
@@ -42,6 +44,57 @@ class PoseDetectionService {
     }
   }
 
+  private getStableDetection(detection: ElbowPositions): ElbowPositions {
+    this.detectionBuffer.push(detection);
+    if (this.detectionBuffer.length > this.bufferSize) {
+      this.detectionBuffer.shift();
+    }
+
+    // Return most recent detection if buffer isn't full
+    if (this.detectionBuffer.length < this.bufferSize) {
+      return detection;
+    }
+
+    // Return null if any recent detection was null
+    const hasNullDetection = this.detectionBuffer.some(d => !d.leftElbow || !d.rightElbow);
+    if (hasNullDetection) {
+      return detection;
+    }
+
+    // Average the last few detections for stability
+    const avgDetection: ElbowPositions = {
+      leftElbow: {
+        x: 0,
+        y: 0,
+        z: 0,
+        visibility: 0
+      },
+      rightElbow: {
+        x: 0,
+        y: 0,
+        z: 0,
+        visibility: 0
+      },
+      landmarks: detection.landmarks
+    };
+
+    this.detectionBuffer.forEach(d => {
+      if (d.leftElbow && d.rightElbow) {
+        avgDetection.leftElbow!.x += d.leftElbow.x / this.bufferSize;
+        avgDetection.leftElbow!.y += d.leftElbow.y / this.bufferSize;
+        avgDetection.leftElbow!.z += d.leftElbow.z / this.bufferSize;
+        avgDetection.leftElbow!.visibility! += (d.leftElbow.visibility || 0) / this.bufferSize;
+
+        avgDetection.rightElbow!.x += d.rightElbow.x / this.bufferSize;
+        avgDetection.rightElbow!.y += d.rightElbow.y / this.bufferSize;
+        avgDetection.rightElbow!.z += d.rightElbow.z / this.bufferSize;
+        avgDetection.rightElbow!.visibility! += (d.rightElbow.visibility || 0) / this.bufferSize;
+      }
+    });
+
+    return avgDetection;
+  }
+
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
     if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) {
       console.log('[PoseDetection] Skipping detection:', {
@@ -53,7 +106,7 @@ class PoseDetectionService {
     }
     
     const currentTime = performance.now();
-    if (currentTime - this.lastProcessingTime < 33.33) {
+    if (currentTime - this.lastProcessingTime < 33.33) { // Limit to ~30 FPS
       return null;
     }
 
@@ -67,6 +120,12 @@ class PoseDetectionService {
 
       if (results?.landmarks?.[0]) {
         const landmarks = results.landmarks[0];
+        const detection = {
+          leftElbow: landmarks[13] || null,
+          rightElbow: landmarks[14] || null,
+          landmarks: landmarks,
+        };
+
         console.log('[PoseDetection] Detected landmarks:', {
           leftElbow: landmarks[13],
           rightElbow: landmarks[14],
@@ -74,11 +133,7 @@ class PoseDetectionService {
           rightShoulder: landmarks[12]
         });
 
-        return {
-          leftElbow: landmarks[13] || null,
-          rightElbow: landmarks[14] || null,
-          landmarks: landmarks,
-        };
+        return this.getStableDetection(detection);
       }
       
       console.log('[PoseDetection] No landmarks detected in this frame');

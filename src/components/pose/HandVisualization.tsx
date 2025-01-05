@@ -31,17 +31,22 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
   const [lastGesture, setLastGesture] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isDetectionActive && leftElbow && leftShoulder) {
-      const gestureResult = gestureRecognitionService.detectGesture([leftElbow, leftShoulder]);
-      if (gestureResult && gestureResult.gesture !== lastGesture) {
-        setLastGesture(gestureResult.gesture);
-        toast({
-          title: "Gesture Detected",
-          description: `Detected ${gestureResult.gesture} gesture`,
-        });
+    if (isDetectionActive) {
+      const relevantElbow = amputationType === 'left_arm' ? leftElbow : rightElbow;
+      const relevantShoulder = amputationType === 'left_arm' ? leftShoulder : rightShoulder;
+      
+      if (relevantElbow && relevantShoulder) {
+        const gestureResult = gestureRecognitionService.detectGesture([relevantElbow, relevantShoulder]);
+        if (gestureResult && gestureResult.gesture !== lastGesture) {
+          setLastGesture(gestureResult.gesture);
+          toast({
+            title: "Gesture Detected",
+            description: `Detected ${gestureResult.gesture} gesture`,
+          });
+        }
       }
     }
-  }, [isDetectionActive, leftElbow, leftShoulder, lastGesture]);
+  }, [isDetectionActive, leftElbow, rightElbow, leftShoulder, rightShoulder, amputationType, lastGesture]);
 
   const handleCalibrationComplete = (data: CalibrationData) => {
     setCalibrationData(data);
@@ -77,46 +82,14 @@ export const HandVisualization: React.FC<HandVisualizationProps> = ({
         />
       )}
 
-      {amputationType === 'left_arm' && (
-        <ThreeDHand
-          isEnabled={isVirtualHandEnabled}
-          isDetectionActive={isDetectionActive}
-          elbow={leftElbow}
-          shoulder={leftShoulder}
-          handModel={handModel}
-          calibrationData={calibrationData}
-        />
-      )}
-      {amputationType === 'right_arm' && (
-        <ThreeDHand
-          isEnabled={isVirtualHandEnabled}
-          isDetectionActive={isDetectionActive}
-          elbow={rightElbow}
-          shoulder={rightShoulder}
-          handModel={handModel}
-          calibrationData={calibrationData}
-        />
-      )}
-      {amputationType === 'both' && (
-        <>
-          <ThreeDHand
-            isEnabled={isVirtualHandEnabled}
-            isDetectionActive={isDetectionActive}
-            elbow={leftElbow}
-            shoulder={leftShoulder}
-            handModel={handModel}
-            calibrationData={calibrationData}
-          />
-          <ThreeDHand
-            isEnabled={isVirtualHandEnabled}
-            isDetectionActive={isDetectionActive}
-            elbow={rightElbow}
-            shoulder={rightShoulder}
-            handModel={handModel}
-            calibrationData={calibrationData}
-          />
-        </>
-      )}
+      <ThreeDHand
+        isEnabled={isVirtualHandEnabled}
+        isDetectionActive={isDetectionActive}
+        elbow={amputationType === 'left_arm' ? leftElbow : rightElbow}
+        shoulder={amputationType === 'left_arm' ? leftShoulder : rightShoulder}
+        handModel={handModel}
+        calibrationData={calibrationData}
+      />
     </>
   );
 };
