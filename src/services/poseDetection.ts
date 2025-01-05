@@ -1,20 +1,22 @@
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
-import { POSE_DETECTION_CONFIG, DETECTION_SMOOTHING } from '../config/detection';
-import { toast } from '@/hooks/use-toast';
+import { POSE_DETECTION_CONFIG } from '../config/detection';
 import { ElbowPositions, Landmark } from '../types';
 
 class PoseDetectionService {
   private poseLandmarker: PoseLandmarker | null = null;
   private lastProcessingTime: number = 0;
   private isProcessing: boolean = false;
-  private fps: number = 0;
-  private lastFpsUpdate: number = 0;
   private frameCount: number = 0;
-  private detectionBuffer: ElbowPositions[] = [];
+  private lastFpsUpdate: number = 0;
+  private fps: number = 0;
+  
+  // Confidence thresholds for detection
+  private readonly MIN_VISIBILITY_THRESHOLD = 0.65;
+  private readonly MIN_PRESENCE_CONFIDENCE = 0.75;
 
   async initialize(): Promise<void> {
     try {
-      console.log('[PoseDetection] Initializing with config:', POSE_DETECTION_CONFIG);
+      console.log('[PoseDetection] Initializing MediaPipe Pose Landmarker...');
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
@@ -25,78 +27,36 @@ class PoseDetectionService {
           delegate: "GPU"
         },
         runningMode: "VIDEO",
-        numPoses: POSE_DETECTION_CONFIG.numPoses,
-        minPoseDetectionConfidence: POSE_DETECTION_CONFIG.minPoseDetectionConfidence,
-        minPosePresenceConfidence: POSE_DETECTION_CONFIG.minPosePresenceConfidence,
-        minTrackingConfidence: POSE_DETECTION_CONFIG.minTrackingConfidence,
+        numPoses: 1,
+        minPoseDetectionConfidence: this.MIN_PRESENCE_CONFIDENCE,
+        minPosePresenceConfidence: this.MIN_PRESENCE_CONFIDENCE,
+        minTrackingConfidence: this.MIN_PRESENCE_CONFIDENCE,
       });
 
       console.log('[PoseDetection] Successfully initialized pose landmarker');
     } catch (error) {
       console.error('[PoseDetection] Initialization failed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize pose detection. Please check your connection and try again.",
-        variant: "destructive",
-      });
       throw error;
     }
   }
 
   private isLandmarkVisible(landmark: Landmark): boolean {
-    return (landmark.visibility || 0) > DETECTION_SMOOTHING.minVisibilityThreshold;
+    return (landmark.visibility || 0) > this.MIN_VISIBILITY_THRESHOLD;
   }
 
-  private smoothLandmarks(detection: ElbowPositions): ElbowPositions {
-    this.detectionBuffer.push(detection);
-    if (this.detectionBuffer.length > DETECTION_SMOOTHING.bufferSize) {
-      this.detectionBuffer.shift();
-    }
-
-    const visibleDetections = this.detectionBuffer.filter(d => 
-      d.leftElbow && d.rightElbow && 
-      this.isLandmarkVisible(d.leftElbow) && 
-      this.isLandmarkVisible(d.rightElbow)
+  private calculateArmLength(shoulder: Landmark, elbow: Landmark): number {
+    return Math.sqrt(
+      Math.pow(shoulder.x - elbow.x, 2) +
+      Math.pow(shoulder.y - elbow.y, 2) +
+      Math.pow(shoulder.z - elbow.z, 2)
     );
+  }
 
-    if (visibleDetections.length < 2) {
-      return detection;
-    }
-
-    const smoothed: ElbowPositions = {
-      leftElbow: {
-        x: 0,
-        y: 0,
-        z: 0,
-        visibility: 0
-      },
-      rightElbow: {
-        x: 0,
-        y: 0,
-        z: 0,
-        visibility: 0
-      },
-      landmarks: detection.landmarks
-    };
-
-    const count = visibleDetections.length;
-    visibleDetections.forEach(d => {
-      if (d.leftElbow && d.rightElbow) {
-        ['leftElbow', 'rightElbow'].forEach(key => {
-          const landmark = d[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>];
-          if (landmark) {
-            smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>] = {
-              x: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.x || 0) + landmark.x / count,
-              y: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.y || 0) + landmark.y / count,
-              z: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.z || 0) + landmark.z / count,
-              visibility: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.visibility || 0) + (landmark.visibility || 0) / count,
-            };
-          }
-        });
-      }
-    });
-
-    return smoothed;
+  private isArmPresent(shoulder: Landmark, elbow: Landmark): boolean {
+    const armLength = this.calculateArmLength(shoulder, elbow);
+    const isVisible = this.isLandmarkVisible(shoulder) && this.isLandmarkVisible(elbow);
+    // Typical arm length in normalized coordinates should be between 0.1 and 0.4
+    return isVisible && armLength > 0.1 && armLength < 0.4;
   }
 
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
@@ -119,22 +79,36 @@ class PoseDetectionService {
 
       if (results?.landmarks?.[0]) {
         const landmarks = results.landmarks[0];
-        const detection = {
-          leftElbow: landmarks[13] || null,
-          rightElbow: landmarks[14] || null,
-          leftShoulder: landmarks[11] || null,
-          rightShoulder: landmarks[12] || null,
+        const leftShoulder = landmarks[11];
+        const rightShoulder = landmarks[12];
+        const leftElbow = landmarks[13];
+        const rightElbow = landmarks[14];
+
+        // Check if arms are present based on visibility and distance
+        const leftArmPresent = this.isArmPresent(leftShoulder, leftElbow);
+        const rightArmPresent = this.isArmPresent(rightShoulder, rightElbow);
+
+        console.log('[PoseDetection] Arm detection:', {
+          leftArmPresent,
+          rightArmPresent,
+          leftShoulderVisibility: leftShoulder.visibility,
+          rightShoulderVisibility: rightShoulder.visibility,
+          leftElbowVisibility: leftElbow.visibility,
+          rightElbowVisibility: rightElbow.visibility
+        });
+
+        return {
+          leftElbow: leftArmPresent ? leftElbow : null,
+          rightElbow: rightArmPresent ? rightElbow : null,
+          leftShoulder: leftArmPresent ? leftShoulder : null,
+          rightShoulder: rightArmPresent ? rightShoulder : null,
           landmarks: landmarks,
         };
-
-        console.log('[PoseDetection] Detected landmarks:', detection);
-        return this.smoothLandmarks(detection);
       }
       
       return null;
     } catch (error) {
       console.error('[PoseDetection] Error detecting poses:', error);
-      this.isProcessing = false;
       throw error;
     } finally {
       this.isProcessing = false;

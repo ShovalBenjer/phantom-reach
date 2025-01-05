@@ -12,7 +12,10 @@ export const ArmSegmentVisualization: React.FC<ArmSegmentVisualizationProps> = (
   shoulder,
   color
 }) => {
-  if (!elbow || !shoulder) return null;
+  if (!elbow || !shoulder || !elbow.visibility || !shoulder.visibility) return null;
+
+  // Only show visualization if both points are visible enough
+  if (elbow.visibility < 0.65 || shoulder.visibility < 0.65) return null;
 
   return (
     <svg className="absolute inset-0 pointer-events-none">
