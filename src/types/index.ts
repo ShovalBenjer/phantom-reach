@@ -40,7 +40,7 @@ export interface CalibrationData {
 
 export type HandModel = 'realistic' | 'robotic' | 'skeletal' | 'cartoon';
 
-export type AmputationType = 'left_arm' | 'right_arm' | 'both';
+export type AmputationType = 'left_arm' | 'right_arm';
 
 export interface HandVisualizationProps {
   isDetectionActive: boolean;

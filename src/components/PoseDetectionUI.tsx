@@ -89,19 +89,17 @@ export const PoseDetectionUI: React.FC = () => {
       role="main"
       aria-label="Pose Detection Interface"
     >
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm p-4 shadow-md">
-        <div className="max-w-md mx-auto">
-          <img 
-            src="/lovable-uploads/cb4a0533-02e3-47ff-a388-75ca4008048a.png"
-            alt="PhantomReach Logo" 
-            className="h-16 w-auto mx-auto"
-            aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
-            onError={(e) => {
-              console.error('Image failed to load:', e);
-              e.currentTarget.src = 'placeholder.svg';
-            }}
-          />
-        </div>
+      <div className="fixed top-0 left-0 z-50 p-4">
+        <img 
+          src="/lovable-uploads/e8d1ad53-0473-49c4-bc46-8e6e12722158.png"
+          alt="PhantomReach Logo" 
+          className="h-16 w-auto"
+          aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
+          onError={(e) => {
+            console.error('Image failed to load:', e);
+            e.currentTarget.src = 'placeholder.svg';
+          }}
+        />
       </div>
 
       <div className="mt-24">
@@ -121,7 +119,7 @@ export const PoseDetectionUI: React.FC = () => {
           className="flex items-center gap-2"
         >
           {showElbowDetection ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {showElbowDetection ? "Hide" : "Show"} Elbow Detection
+          {showElbowDetection ? "Hide" : "Show"} Amputated Arm Detection
         </Button>
       </div>
 

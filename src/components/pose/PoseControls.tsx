@@ -35,13 +35,12 @@ export const PoseControls: React.FC<PoseControlsProps> = ({
       <div className="flex flex-col gap-4 animate-fade-in">
         <div className="flex gap-2">
           <Select value={amputationType} onValueChange={onAmputationTypeChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[280px]">
               <SelectValue placeholder="Select amputation type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="left_arm">Left Arm</SelectItem>
-              <SelectItem value="right_arm">Right Arm</SelectItem>
-              <SelectItem value="both">Both Arms</SelectItem>
+              <SelectItem value="left_arm">I have Left Arm Amputation</SelectItem>
+              <SelectItem value="right_arm">I have Right Arm Amputation</SelectItem>
             </SelectContent>
           </Select>
 
