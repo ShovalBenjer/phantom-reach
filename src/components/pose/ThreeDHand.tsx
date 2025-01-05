@@ -48,8 +48,9 @@ export const ThreeDHand: React.FC<ThreeDHandProps> = ({
       serviceRef.current.setVisible(isEnabled && isDetectionActive);
       serviceRef.current.updateHandModel(handModel);
       
-      if (isEnabled && isDetectionActive && elbow) {
-        serviceRef.current.updateHandPosition(elbow, shoulder, calibrationData);
+      if (isEnabled && isDetectionActive && elbow && shoulder) {
+        // Only pass elbow and shoulder to updateHandPosition
+        serviceRef.current.updateHandPosition(elbow, shoulder);
       }
     }
   }, [isEnabled, isDetectionActive, elbow, shoulder, handModel, calibrationData]);
