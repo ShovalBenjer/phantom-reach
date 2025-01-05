@@ -1,7 +1,7 @@
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
-import { POSE_DETECTION_CONFIG } from '../config/detection';
-import { toast } from '@/components/ui/use-toast';
-import { ElbowPositions } from '../types';
+import { POSE_DETECTION_CONFIG, DETECTION_SMOOTHING } from '../config/detection';
+import { toast } from '@/hooks/use-toast';
+import { ElbowPositions, Landmark } from '../types';
 
 class PoseDetectionService {
   private poseLandmarker: PoseLandmarker | null = null;
@@ -11,7 +11,6 @@ class PoseDetectionService {
   private lastFpsUpdate: number = 0;
   private frameCount: number = 0;
   private detectionBuffer: ElbowPositions[] = [];
-  private readonly bufferSize = 3;
 
   async initialize(): Promise<void> {
     try {
@@ -32,7 +31,7 @@ class PoseDetectionService {
         minTrackingConfidence: POSE_DETECTION_CONFIG.minTrackingConfidence,
       });
 
-      console.log('[PoseDetection] Successfully initialized pose landmarker:', this.poseLandmarker);
+      console.log('[PoseDetection] Successfully initialized pose landmarker');
     } catch (error) {
       console.error('[PoseDetection] Initialization failed:', error);
       toast({
@@ -44,25 +43,27 @@ class PoseDetectionService {
     }
   }
 
-  private getStableDetection(detection: ElbowPositions): ElbowPositions {
+  private isLandmarkVisible(landmark: Landmark): boolean {
+    return (landmark.visibility || 0) > DETECTION_SMOOTHING.minVisibilityThreshold;
+  }
+
+  private smoothLandmarks(detection: ElbowPositions): ElbowPositions {
     this.detectionBuffer.push(detection);
-    if (this.detectionBuffer.length > this.bufferSize) {
+    if (this.detectionBuffer.length > DETECTION_SMOOTHING.bufferSize) {
       this.detectionBuffer.shift();
     }
 
-    // Return most recent detection if buffer isn't full
-    if (this.detectionBuffer.length < this.bufferSize) {
+    const visibleDetections = this.detectionBuffer.filter(d => 
+      d.leftElbow && d.rightElbow && 
+      this.isLandmarkVisible(d.leftElbow) && 
+      this.isLandmarkVisible(d.rightElbow)
+    );
+
+    if (visibleDetections.length < 2) {
       return detection;
     }
 
-    // Return null if any recent detection was null
-    const hasNullDetection = this.detectionBuffer.some(d => !d.leftElbow || !d.rightElbow);
-    if (hasNullDetection) {
-      return detection;
-    }
-
-    // Average the last few detections for stability
-    const avgDetection: ElbowPositions = {
+    const smoothed: ElbowPositions = {
       leftElbow: {
         x: 0,
         y: 0,
@@ -78,30 +79,28 @@ class PoseDetectionService {
       landmarks: detection.landmarks
     };
 
-    this.detectionBuffer.forEach(d => {
+    const count = visibleDetections.length;
+    visibleDetections.forEach(d => {
       if (d.leftElbow && d.rightElbow) {
-        avgDetection.leftElbow!.x += d.leftElbow.x / this.bufferSize;
-        avgDetection.leftElbow!.y += d.leftElbow.y / this.bufferSize;
-        avgDetection.leftElbow!.z += d.leftElbow.z / this.bufferSize;
-        avgDetection.leftElbow!.visibility! += (d.leftElbow.visibility || 0) / this.bufferSize;
-
-        avgDetection.rightElbow!.x += d.rightElbow.x / this.bufferSize;
-        avgDetection.rightElbow!.y += d.rightElbow.y / this.bufferSize;
-        avgDetection.rightElbow!.z += d.rightElbow.z / this.bufferSize;
-        avgDetection.rightElbow!.visibility! += (d.rightElbow.visibility || 0) / this.bufferSize;
+        ['leftElbow', 'rightElbow'].forEach(key => {
+          const landmark = d[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>];
+          if (landmark) {
+            smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>] = {
+              x: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.x || 0) + landmark.x / count,
+              y: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.y || 0) + landmark.y / count,
+              z: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.z || 0) + landmark.z / count,
+              visibility: (smoothed[key as keyof Pick<ElbowPositions, 'leftElbow' | 'rightElbow'>]?.visibility || 0) + (landmark.visibility || 0) / count,
+            };
+          }
+        });
       }
     });
 
-    return avgDetection;
+    return smoothed;
   }
 
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
     if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) {
-      console.log('[PoseDetection] Skipping detection:', {
-        hasLandmarker: !!this.poseLandmarker,
-        isProcessing: this.isProcessing,
-        videoWidth: video.videoWidth
-      });
       return null;
     }
     
@@ -123,20 +122,15 @@ class PoseDetectionService {
         const detection = {
           leftElbow: landmarks[13] || null,
           rightElbow: landmarks[14] || null,
+          leftShoulder: landmarks[11] || null,
+          rightShoulder: landmarks[12] || null,
           landmarks: landmarks,
         };
 
-        console.log('[PoseDetection] Detected landmarks:', {
-          leftElbow: landmarks[13],
-          rightElbow: landmarks[14],
-          leftShoulder: landmarks[11],
-          rightShoulder: landmarks[12]
-        });
-
-        return this.getStableDetection(detection);
+        console.log('[PoseDetection] Detected landmarks:', detection);
+        return this.smoothLandmarks(detection);
       }
       
-      console.log('[PoseDetection] No landmarks detected in this frame');
       return null;
     } catch (error) {
       console.error('[PoseDetection] Error detecting poses:', error);
