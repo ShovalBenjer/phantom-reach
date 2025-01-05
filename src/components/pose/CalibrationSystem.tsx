@@ -30,41 +30,13 @@ export const CalibrationSystem: React.FC<CalibrationSystemProps> = ({
   const [progress, setProgress] = useState(0);
   const [calibrationData, setCalibrationData] = useState<Partial<CalibrationData>>({});
 
-  const steps = [
-    {
-      instruction: "Stand in a T-pose with arms extended",
-      duration: 3000,
-      action: (landmarks: Landmark[]) => {
-        // Measure shoulder width and arm length
-        if (landmarks[11] && landmarks[12]) {
-          const shoulderWidth = Math.abs(landmarks[11].x - landmarks[12].x);
-          setCalibrationData(prev => ({ ...prev, shoulderWidth }));
-        }
-      }
-    },
-    {
-      instruction: "Move your arms in circular motions",
-      duration: 5000,
-      action: (landmarks: Landmark[]) => {
-        // Calculate range of motion
-        if (landmarks[13] && landmarks[14]) {
-          const { x, y } = landmarks[13];
-          setCalibrationData(prev => ({
-            ...prev,
-            rangeOfMotion: {
-              minX: Math.min(x, prev.rangeOfMotion?.minX ?? x),
-              maxX: Math.max(x, prev.rangeOfMotion?.maxX ?? x),
-              minY: Math.min(y, prev.rangeOfMotion?.minY ?? y),
-              maxY: Math.max(y, prev.rangeOfMotion?.maxY ?? y),
-            }
-          }));
-        }
-      }
-    }
-  ];
-
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      setStep(0);
+      setProgress(0);
+      setCalibrationData({});
+      return;
+    }
 
     const currentStep = steps[step];
     if (!currentStep) return;
@@ -93,12 +65,43 @@ export const CalibrationSystem: React.FC<CalibrationSystemProps> = ({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isActive, step, calibrationData]);
+  }, [isActive, step, calibrationData, onComplete]);
+
+  const steps = [
+    {
+      instruction: "Stand in a T-pose with arms extended",
+      duration: 3000,
+      action: (landmarks: Landmark[]) => {
+        if (landmarks[11] && landmarks[12]) {
+          const shoulderWidth = Math.abs(landmarks[11].x - landmarks[12].x);
+          setCalibrationData(prev => ({ ...prev, shoulderWidth }));
+        }
+      }
+    },
+    {
+      instruction: "Move your arms in circular motions",
+      duration: 5000,
+      action: (landmarks: Landmark[]) => {
+        if (landmarks[13] && landmarks[14]) {
+          const { x, y } = landmarks[13];
+          setCalibrationData(prev => ({
+            ...prev,
+            rangeOfMotion: {
+              minX: Math.min(x, prev.rangeOfMotion?.minX ?? x),
+              maxX: Math.max(x, prev.rangeOfMotion?.maxX ?? x),
+              minY: Math.min(y, prev.rangeOfMotion?.minY ?? y),
+              maxY: Math.max(y, prev.rangeOfMotion?.maxY ?? y),
+            }
+          }));
+        }
+      }
+    }
+  ];
 
   if (!isActive) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-2xl font-bold mb-4">Calibration</h2>
         <p className="mb-4">{steps[step].instruction}</p>

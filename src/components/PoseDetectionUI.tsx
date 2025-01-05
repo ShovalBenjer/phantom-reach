@@ -90,7 +90,7 @@ export const PoseDetectionUI: React.FC = () => {
       role="main"
       aria-label="Pose Detection Interface"
     >
-      <div className="fixed top-0 left-0 z-50 p-4">
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
         <img 
           src="/lovable-uploads/e8d1ad53-0473-49c4-bc46-8e6e12722158.png"
           alt="PhantomReach Logo" 
