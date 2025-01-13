@@ -1,9 +1,13 @@
 export interface PoseDetectionConfig {
-  modelPath: string;
-  minPoseDetectionConfidence: number;
+  modelPath?: string;
+  minPoseDetectionConfidence?: number;
   minPosePresenceConfidence: number;
   minTrackingConfidence: number;
   numPoses: number;
+  modelComplexity?: 'Lite' | 'Full' | 'Heavy';
+  smoothLandmarks?: boolean;
+  enableSegmentation?: boolean;
+  smoothSegmentation?: boolean;
 }
 
 export interface Landmark {

@@ -1,7 +1,8 @@
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
-import { POSE_DETECTION_CONFIG } from '../config/detection';
+import { POSE_DETECTION_CONFIG, FRAME_PROCESSING_CONFIG } from '../config/detection';
 import { toast } from '@/components/ui/use-toast';
 import { ElbowPositions } from '../types';
+import { transformElbowPositions } from '../utils/coordinateTransform';
 
 class PoseDetectionService {
   private poseLandmarker: PoseLandmarker | null = null;
