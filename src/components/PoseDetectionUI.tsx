@@ -11,6 +11,7 @@ import { CanvasOverlay } from './pose/CanvasOverlay';
 import { Header } from './pose/Header';
 import { LoadingOverlay } from './pose/LoadingOverlay';
 import { checkDeviceSupport } from '../utils/deviceDetection';
+import { VisualEffects } from './effects/VisualEffects';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -41,6 +42,11 @@ export const PoseDetectionUI: React.FC = () => {
   const fpsIntervalRef = useRef<number>();
   const animationFrameRef = useRef<number>();
   const detectionLoopRef = useRef<boolean>(false);
+
+  const [currentElbowPositions, setCurrentElbowPositions] = useState<{
+    leftElbow?: { x: number; y: number } | null;
+    rightElbow?: { x: number; y: number } | null;
+  }>({});
 
   useEffect(() => {
     const isSupported = checkDeviceSupport();
@@ -159,6 +165,11 @@ export const PoseDetectionUI: React.FC = () => {
         
         if (elbows) {
           console.log('Elbows detected:', elbows);
+          setCurrentElbowPositions({
+            leftElbow: elbows.leftElbow,
+            rightElbow: elbows.rightElbow
+          });
+          
           virtualHandServiceRef.current?.clearCanvas();
           
           if (amputationType === 'left_arm' || amputationType === 'both') {
@@ -262,6 +273,11 @@ export const PoseDetectionUI: React.FC = () => {
           ref={canvasRef}
           width={640}
           height={480}
+        />
+        <VisualEffects 
+          isPoseDetected={isPoseDetected}
+          isProcessing={isLoading}
+          elbowPositions={currentElbowPositions}
         />
       </div>
     </div>
