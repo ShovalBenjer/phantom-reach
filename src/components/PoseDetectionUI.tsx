@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
@@ -10,6 +8,8 @@ import { PoseControls } from './pose/PoseControls';
 import { AdvancedControls } from './controls/AdvancedControls';
 import { VideoFeed } from './pose/VideoFeed';
 import { CanvasOverlay } from './pose/CanvasOverlay';
+import { Header } from './pose/Header';
+import { LoadingOverlay } from './pose/LoadingOverlay';
 import { checkDeviceSupport } from '../utils/deviceDetection';
 
 export const PoseDetectionUI: React.FC = () => {
@@ -48,7 +48,7 @@ export const PoseDetectionUI: React.FC = () => {
       toast({
         title: "Browser Support",
         description: "Some features may be limited in your browser. Chrome is recommended for best experience.",
-        variant: "default", // Changed from "warning" to "default"
+        variant: "default",
       });
     }
     
@@ -222,25 +222,8 @@ export const PoseDetectionUI: React.FC = () => {
 
   return (
     <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
-      {isLoading && (
-        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
-      
-      <div className="flex items-center justify-between w-full max-w-3xl">
-        <img 
-          src="/lovable-uploads/019da9ba-4e1c-41c1-a77c-8dcea51f53b9.png" 
-          alt="Phantom Reach" 
-          className="h-12 object-contain"
-        />
-        <div className="flex gap-2 items-center">
-          <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
-            {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
-          </Badge>
-          <Badge variant="outline">{fps} FPS</Badge>
-        </div>
-      </div>
+      <LoadingOverlay isLoading={isLoading} />
+      <Header isWebcamEnabled={isWebcamEnabled} fps={fps} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
         <PoseControls 
