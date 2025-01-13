@@ -45,8 +45,8 @@ export const PoseDetectionUI: React.FC = () => {
   const detectionLoopRef = useRef<boolean>(false);
 
   const [currentElbowPositions, setCurrentElbowPositions] = useState<{
-    leftElbow?: { x: number; y: number } | null;
-    rightElbow?: { x: number; y: number } | null;
+    leftElbow?: { x: number; y: number; z: number } | null;
+    rightElbow?: { x: number; y: number; z: number } | null;
   }>({});
 
   useEffect(() => {
@@ -167,8 +167,8 @@ export const PoseDetectionUI: React.FC = () => {
         if (elbows) {
           console.log('Elbows detected:', elbows);
           setCurrentElbowPositions({
-            leftElbow: elbows.leftElbow,
-            rightElbow: elbows.rightElbow
+            leftElbow: elbows.leftElbow ? { ...elbows.leftElbow, z: elbows.leftElbow.z || 0 } : null,
+            rightElbow: elbows.rightElbow ? { ...elbows.rightElbow, z: elbows.rightElbow.z || 0 } : null
           });
           
           virtualHandServiceRef.current?.clearCanvas();
