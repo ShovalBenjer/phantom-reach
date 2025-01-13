@@ -3,7 +3,6 @@ import { checkDeviceSupport } from '../../utils/deviceDetection';
 import { toast } from '@/components/ui/use-toast';
 import { AmputationType } from '../../types';
 import { POSE_DETECTION_CONFIG } from '../../config/detection';
-import { poseDetectionService } from '../../services/poseDetection';
 import { DetectionLogic } from './DetectionLogic';
 import { PoseControls } from '../pose/PoseControls';
 import { AdvancedControls } from '../controls/AdvancedControls';
@@ -13,6 +12,7 @@ import { Header } from '../pose/Header';
 import { LoadingOverlay } from '../pose/LoadingOverlay';
 import { VisualEffects } from '../effects/VisualEffects';
 import { ArmModel } from '../3d/ArmModel';
+import { SettingsManager } from './SettingsManager';
 
 export const MainContainer: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -45,6 +45,18 @@ export const MainContainer: React.FC = () => {
     rightElbow?: { x: number; y: number; z: number } | null;
   }>({});
 
+  const settingsManager = SettingsManager({
+    modelComplexity,
+    smoothingEnabled,
+    segmentationEnabled,
+    confidenceThreshold,
+    setModelComplexity,
+    setSmoothingEnabled,
+    setSegmentationEnabled,
+    setConfidenceThreshold,
+    setIsLoading,
+  });
+
   React.useEffect(() => {
     const isSupported = checkDeviceSupport();
     if (!isSupported) {
@@ -72,41 +84,6 @@ export const MainContainer: React.FC = () => {
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
-
-  const handleModelComplexityChange = async (value: 'Lite' | 'Full' | 'Heavy') => {
-    setModelComplexity(value);
-    setIsLoading(true);
-    try {
-      await poseDetectionService.updateConfig({ modelComplexity: value });
-      toast({
-        title: "Settings Updated",
-        description: `Model complexity changed to ${value}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update model complexity",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSmoothingToggle = (enabled: boolean) => {
-    setSmoothingEnabled(enabled);
-    poseDetectionService.updateConfig({ smoothLandmarks: enabled });
-  };
-
-  const handleSegmentationToggle = (enabled: boolean) => {
-    setSegmentationEnabled(enabled);
-    poseDetectionService.updateConfig({ enableSegmentation: enabled });
-  };
-
-  const handleConfidenceThresholdChange = (value: number) => {
-    setConfidenceThreshold(value);
-    poseDetectionService.updateConfig({ minPoseDetectionConfidence: value });
   };
 
   return (
@@ -148,10 +125,10 @@ export const MainContainer: React.FC = () => {
                   smoothingEnabled={smoothingEnabled}
                   segmentationEnabled={segmentationEnabled}
                   confidenceThreshold={confidenceThreshold}
-                  onModelComplexityChange={handleModelComplexityChange}
-                  onSmoothingToggle={handleSmoothingToggle}
-                  onSegmentationToggle={handleSegmentationToggle}
-                  onConfidenceThresholdChange={handleConfidenceThresholdChange}
+                  onModelComplexityChange={settingsManager.handleModelComplexityChange}
+                  onSmoothingToggle={settingsManager.handleSmoothingToggle}
+                  onSegmentationToggle={settingsManager.handleSegmentationToggle}
+                  onConfidenceThresholdChange={settingsManager.handleConfidenceThresholdChange}
                 />
               </div>
             )}
