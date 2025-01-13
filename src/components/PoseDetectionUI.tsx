@@ -48,7 +48,7 @@ export const PoseDetectionUI: React.FC = () => {
       toast({
         title: "Browser Support",
         description: "Some features may be limited in your browser. Chrome is recommended for best experience.",
-        variant: "warning",
+        variant: "default", // Changed from "warning" to "default"
       });
     }
     
