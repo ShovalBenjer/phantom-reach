@@ -3,6 +3,7 @@ import { checkDeviceSupport } from '../../utils/deviceDetection';
 import { toast } from '@/components/ui/use-toast';
 import { AmputationType } from '../../types';
 import { POSE_DETECTION_CONFIG } from '../../config/detection';
+import { poseDetectionService } from '../../services/poseDetection';
 import { DetectionLogic } from './DetectionLogic';
 import { PoseControls } from '../pose/PoseControls';
 import { AdvancedControls } from '../controls/AdvancedControls';
