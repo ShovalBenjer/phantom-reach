@@ -1,10 +1,15 @@
 import { PoseDetectionUI } from '@/components/PoseDetectionUI';
 import { Hero } from '@/components/sections/Hero';
+import { AboutUs } from '@/components/sections/AboutUs';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Hero />
+      
+      <div id="about-section" className="py-20">
+        <AboutUs />
+      </div>
       
       <div id="demo-section" className="container mx-auto py-8">
         <div className="flex flex-col items-center mb-8">
