@@ -4,8 +4,9 @@ import { toast } from '@/components/ui/use-toast';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
-import { WEBCAM_CONFIG } from '../config/detection';
+import { POSE_DETECTION_CONFIG, WEBCAM_CONFIG } from '../config/detection';
 import { PoseControls } from './pose/PoseControls';
+import { AdvancedControls } from './controls/AdvancedControls';
 import { Loader2 } from 'lucide-react';
 
 export const PoseDetectionUI: React.FC = () => {
@@ -17,7 +18,19 @@ export const PoseDetectionUI: React.FC = () => {
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [modelComplexity, setModelComplexity] = useState<'Lite' | 'Full' | 'Heavy'>(
+    POSE_DETECTION_CONFIG.modelComplexity || 'Lite'
+  );
+  const [smoothingEnabled, setSmoothingEnabled] = useState(
+    POSE_DETECTION_CONFIG.smoothLandmarks || false
+  );
+  const [segmentationEnabled, setSegmentationEnabled] = useState(
+    POSE_DETECTION_CONFIG.enableSegmentation || false
+  );
+  const [confidenceThreshold, setConfidenceThreshold] = useState(
+    POSE_DETECTION_CONFIG.minPoseDetectionConfidence || 0.5
+  );
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -161,6 +174,41 @@ export const PoseDetectionUI: React.FC = () => {
     detectFrame();
   };
 
+  const handleModelComplexityChange = async (value: 'Lite' | 'Full' | 'Heavy') => {
+    setModelComplexity(value);
+    setIsLoading(true);
+    try {
+      await poseDetectionService.updateConfig({ modelComplexity: value });
+      toast({
+        title: "Settings Updated",
+        description: `Model complexity changed to ${value}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update model complexity",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSmoothingToggle = (enabled: boolean) => {
+    setSmoothingEnabled(enabled);
+    poseDetectionService.updateConfig({ smoothLandmarks: enabled });
+  };
+
+  const handleSegmentationToggle = (enabled: boolean) => {
+    setSegmentationEnabled(enabled);
+    poseDetectionService.updateConfig({ enableSegmentation: enabled });
+  };
+
+  const handleConfidenceThresholdChange = (value: number) => {
+    setConfidenceThreshold(value);
+    poseDetectionService.updateConfig({ minPoseDetectionConfidence: value });
+  };
+
   return (
     <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
       {isLoading && (
@@ -183,18 +231,33 @@ export const PoseDetectionUI: React.FC = () => {
         </div>
       </div>
 
-      <PoseControls 
-        isWebcamEnabled={isWebcamEnabled}
-        isDetectionActive={isDetectionActive}
-        isVirtualHandEnabled={isVirtualHandEnabled}
-        isFullscreen={isFullscreen}
-        amputationType={amputationType}
-        onStartWebcam={startWebcam}
-        onToggleDetection={toggleDetection}
-        onToggleVirtualHand={toggleVirtualHand}
-        onToggleFullscreen={toggleFullscreen}
-        onAmputationTypeChange={setAmputationType}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
+        <PoseControls 
+          isWebcamEnabled={isWebcamEnabled}
+          isDetectionActive={isDetectionActive}
+          isVirtualHandEnabled={isVirtualHandEnabled}
+          isFullscreen={isFullscreen}
+          amputationType={amputationType}
+          onStartWebcam={startWebcam}
+          onToggleDetection={toggleDetection}
+          onToggleVirtualHand={toggleVirtualHand}
+          onToggleFullscreen={toggleFullscreen}
+          onAmputationTypeChange={setAmputationType}
+        />
+
+        {isWebcamEnabled && (
+          <AdvancedControls
+            modelComplexity={modelComplexity}
+            smoothingEnabled={smoothingEnabled}
+            segmentationEnabled={segmentationEnabled}
+            confidenceThreshold={confidenceThreshold}
+            onModelComplexityChange={handleModelComplexityChange}
+            onSmoothingToggle={handleSmoothingToggle}
+            onSegmentationToggle={handleSegmentationToggle}
+            onConfidenceThresholdChange={handleConfidenceThresholdChange}
+          />
+        )}
+      </div>
 
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video

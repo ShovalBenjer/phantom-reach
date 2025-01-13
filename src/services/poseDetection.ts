@@ -1,7 +1,7 @@
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 import { POSE_DETECTION_CONFIG, FRAME_PROCESSING_CONFIG } from '../config/detection';
 import { toast } from '@/components/ui/use-toast';
-import { ElbowPositions } from '../types';
+import { ElbowPositions, PoseDetectionConfig } from '../types';
 import { transformElbowPositions } from '../utils/coordinateTransform';
 
 class PoseDetectionService {
@@ -11,24 +11,25 @@ class PoseDetectionService {
   private fps: number = 0;
   private lastFpsUpdate: number = 0;
   private frameCount: number = 0;
+  private currentConfig: PoseDetectionConfig = POSE_DETECTION_CONFIG;
 
   async initialize(): Promise<void> {
     try {
-      console.log('Initializing pose detection with config:', POSE_DETECTION_CONFIG);
+      console.log('Initializing pose detection with config:', this.currentConfig);
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
       
       this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: POSE_DETECTION_CONFIG.modelPath,
+          modelAssetPath: this.currentConfig.modelPath,
           delegate: "GPU"
         },
         runningMode: "VIDEO",
-        numPoses: POSE_DETECTION_CONFIG.numPoses,
-        minPoseDetectionConfidence: POSE_DETECTION_CONFIG.minPoseDetectionConfidence,
-        minPosePresenceConfidence: POSE_DETECTION_CONFIG.minPosePresenceConfidence,
-        minTrackingConfidence: POSE_DETECTION_CONFIG.minTrackingConfidence,
+        numPoses: this.currentConfig.numPoses,
+        minPoseDetectionConfidence: this.currentConfig.minPoseDetectionConfidence,
+        minPosePresenceConfidence: this.currentConfig.minPosePresenceConfidence,
+        minTrackingConfidence: this.currentConfig.minTrackingConfidence,
       });
 
       console.log('Pose detection initialized successfully:', this.poseLandmarker);
@@ -40,6 +41,15 @@ class PoseDetectionService {
         variant: "destructive",
       });
       throw error;
+    }
+  }
+
+  async updateConfig(newConfig: Partial<PoseDetectionConfig>): Promise<void> {
+    this.currentConfig = { ...this.currentConfig, ...newConfig };
+    
+    // If the update requires model reinitialization
+    if (newConfig.modelComplexity || newConfig.modelPath) {
+      await this.initialize();
     }
   }
 
