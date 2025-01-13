@@ -12,6 +12,7 @@ import { Header } from './pose/Header';
 import { LoadingOverlay } from './pose/LoadingOverlay';
 import { checkDeviceSupport } from '../utils/deviceDetection';
 import { VisualEffects } from './effects/VisualEffects';
+import { ArmModel } from './3d/ArmModel';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -235,7 +236,6 @@ export const PoseDetectionUI: React.FC = () => {
     <div ref={containerRef} className="flex flex-col items-center space-y-4 p-6">
       <LoadingOverlay isLoading={isLoading} />
       
-      {/* Only show header and controls when not in fullscreen */}
       {!isFullscreen && (
         <>
           <Header isWebcamEnabled={isWebcamEnabled} fps={fps} />
@@ -281,6 +281,11 @@ export const PoseDetectionUI: React.FC = () => {
           width={640}
           height={480}
           className={isFullscreen ? 'w-full h-full' : ''}
+        />
+        <ArmModel 
+          elbow={amputationType === 'left_arm' ? currentElbowPositions.leftElbow : currentElbowPositions.rightElbow}
+          amputationType={amputationType}
+          isEnabled={isVirtualHandEnabled}
         />
         <VisualEffects 
           isPoseDetected={isPoseDetected}
