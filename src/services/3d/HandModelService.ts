@@ -4,60 +4,60 @@ import { HandModel } from '../../types';
 export class HandModelService {
   private modelConfigs = {
     realistic: {
-      upperArmColor: 0xf0d0c0,
-      forearmColor: 0xe5c5b5,
-      handColor: 0xdbb7a7,
+      color: 0xf0d0c0,
       metalness: 0.2,
       roughness: 0.7,
+      clearcoat: 0.3,
+      transmission: 0.2,
     },
     robotic: {
-      upperArmColor: 0x808080,
-      forearmColor: 0x707070,
-      handColor: 0x606060,
+      color: 0x808080,
       metalness: 0.8,
       roughness: 0.2,
+      clearcoat: 0.5,
+      transmission: 0.0,
     },
     skeletal: {
-      upperArmColor: 0xffffff,
-      forearmColor: 0xf5f5f5,
-      handColor: 0xefefef,
+      color: 0xffffff,
       metalness: 0.3,
       roughness: 0.7,
+      clearcoat: 0.1,
+      transmission: 0.1,
     },
     cartoon: {
-      upperArmColor: 0xffb6c1,
-      forearmColor: 0xffc0cb,
-      handColor: 0xffd1dc,
-      metalness: 0,
-      roughness: 1,
+      color: 0xffb6c1,
+      metalness: 0.0,
+      roughness: 1.0,
+      clearcoat: 0.0,
+      transmission: 0.0,
     },
   };
 
   createArm(model: HandModel, scene: THREE.Scene): THREE.Group {
-    const arm = new THREE.Group();
     const config = this.modelConfigs[model];
+    const arm = new THREE.Group();
 
-    // Create upper arm
+    // Create upper arm with PBR material
     const upperArmGeometry = new THREE.CylinderGeometry(0.15, 0.12, 1.2, 32);
     const upperArmMaterial = new THREE.MeshPhysicalMaterial({
-      color: config.upperArmColor,
+      color: config.color,
       metalness: config.metalness,
       roughness: config.roughness,
-      clearcoat: 0.3,
+      clearcoat: config.clearcoat,
+      clearcoatRoughness: 0.25,
+      transmission: config.transmission,
+      thickness: 0.5,
+      attenuationColor: new THREE.Color(1.0, 0.2, 0.1),
+      attenuationDistance: 0.5,
     });
+
     const upperArm = new THREE.Mesh(upperArmGeometry, upperArmMaterial);
     upperArm.position.y = -0.6;
     arm.add(upperArm);
 
-    // Create elbow joint
+    // Create elbow joint with same material
     const elbowGeometry = new THREE.SphereGeometry(0.15, 32, 32);
-    const elbowMaterial = new THREE.MeshPhysicalMaterial({
-      color: config.forearmColor,
-      metalness: config.metalness,
-      roughness: config.roughness,
-      clearcoat: 0.3,
-    });
-    const elbow = new THREE.Mesh(elbowGeometry, elbowMaterial);
+    const elbow = new THREE.Mesh(elbowGeometry, upperArmMaterial.clone());
     arm.add(elbow);
 
     return arm;

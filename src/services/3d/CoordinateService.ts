@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { Landmark } from '../../types';
 
 export class CoordinateService {
-  private readonly smoothingFactor = 0.1;
+  private readonly MIRROR_FACTOR = -1;
+  private readonly DEPTH_SCALE = 5.0;
   private lastPosition = new THREE.Vector3();
+  private readonly smoothingFactor = 0.3;
 
   calculateArmPosition(elbow: Landmark, shoulder: Landmark | null): THREE.Vector3 {
-    // Calculate position relative to shoulder if available
     const targetX = shoulder ? (elbow.x - shoulder.x) * 10 : (elbow.x - 0.5) * 5;
     const targetY = shoulder ? -(elbow.y - shoulder.y) * 10 : -(elbow.y - 0.5) * 5;
     const targetZ = shoulder ? -((elbow.z - shoulder.z) * 10) : -elbow.z * 5;

@@ -11,6 +11,8 @@ export class ThreeDHandService {
   private arm: THREE.Group;
   private isInitialized: boolean = false;
   private currentModel: HandModel = 'realistic';
+  private lastRenderTime = 0;
+  private readonly FRAME_BUDGET = 1000 / 60;
 
   constructor(private container: HTMLDivElement) {
     this.sceneService = new SceneService(container);
@@ -24,11 +26,21 @@ export class ThreeDHandService {
     if (this.isInitialized) return;
     this.createArm();
     this.isInitialized = true;
+    this.animate();
   }
 
   private createArm() {
     this.arm = this.handModelService.createArm(this.currentModel, this.sceneService.getScene());
   }
+
+  private animate = () => {
+    const currentTime = performance.now();
+    if (currentTime - this.lastRenderTime >= this.FRAME_BUDGET) {
+      this.sceneService.render();
+      this.lastRenderTime = currentTime;
+    }
+    requestAnimationFrame(this.animate);
+  };
 
   updateHandModel(model: HandModel) {
     if (this.currentModel !== model) {
@@ -45,16 +57,11 @@ export class ThreeDHandService {
 
     this.arm.position.copy(position);
     this.arm.rotation.copy(rotation);
-
-    this.sceneService.render();
   }
 
   setVisible(visible: boolean) {
     if (!this.isInitialized) return;
     this.arm.visible = visible;
-    if (visible) {
-      this.sceneService.render();
-    }
   }
 
   resize() {
