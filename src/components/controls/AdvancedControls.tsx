@@ -39,7 +39,7 @@ export const AdvancedControls: React.FC<AdvancedControlsProps> = ({
   onConfidenceThresholdChange,
 }) => {
   return (
-    <div className="absolute right-0 top-0">
+    <div className="absolute right-4 top-0">
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" size="icon">
