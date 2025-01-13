@@ -158,9 +158,6 @@ export const PoseDetectionUI: React.FC = () => {
         <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
           {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
         </Badge>
-        <Badge variant={isPoseDetected ? "default" : "secondary"}>
-          {isPoseDetected ? "Pose Detected" : "No Pose"}
-        </Badge>
         <Badge variant="outline">{fps} FPS</Badge>
       </div>
 
