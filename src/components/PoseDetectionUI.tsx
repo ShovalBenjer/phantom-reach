@@ -6,6 +6,7 @@ import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
 import { WEBCAM_CONFIG } from '../config/detection';
 import { PoseControls } from './pose/PoseControls';
+import { Loader2 } from 'lucide-react';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -15,6 +16,7 @@ export const PoseDetectionUI: React.FC = () => {
   const [fps, setFps] = useState(0);
   const [amputationType, setAmputationType] = useState<AmputationType>('left_arm');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,6 +30,10 @@ export const PoseDetectionUI: React.FC = () => {
     if (canvasRef.current) {
       virtualHandServiceRef.current = new VirtualHandService(canvasRef.current);
     }
+    
+    // Auto-start webcam with selfie mode
+    startWebcam();
+    
     return () => {
       virtualHandServiceRef.current?.dispose();
       if (fpsIntervalRef.current) {
@@ -42,9 +48,10 @@ export const PoseDetectionUI: React.FC = () => {
 
   const startWebcam = async () => {
     try {
+      setIsLoading(true);
       console.log('Requesting webcam access...');
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: WEBCAM_CONFIG,
+        video: { ...WEBCAM_CONFIG, facingMode: "user" },
       });
       
       if (videoRef.current) {
@@ -72,6 +79,8 @@ export const PoseDetectionUI: React.FC = () => {
         description: "Failed to access webcam. Please check your permissions and try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -154,11 +163,24 @@ export const PoseDetectionUI: React.FC = () => {
 
   return (
     <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
-      <div className="flex gap-2 items-center">
-        <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
-          {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
-        </Badge>
-        <Badge variant="outline">{fps} FPS</Badge>
+      {isLoading && (
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between w-full max-w-3xl">
+        <img 
+          src="/phantom-reach-logo.png" 
+          alt="Phantom Reach" 
+          className="h-12 object-contain"
+        />
+        <div className="flex gap-2 items-center">
+          <Badge variant={isWebcamEnabled ? "default" : "secondary"}>
+            {isWebcamEnabled ? "Webcam On" : "Webcam Off"}
+          </Badge>
+          <Badge variant="outline">{fps} FPS</Badge>
+        </div>
       </div>
 
       <PoseControls 
@@ -177,13 +199,13 @@ export const PoseDetectionUI: React.FC = () => {
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
         <video
           ref={videoRef}
-          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}`}
+          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
           autoPlay
           playsInline
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          className="absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1]"
           width={640}
           height={480}
         />

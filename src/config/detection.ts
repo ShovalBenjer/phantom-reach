@@ -6,6 +6,10 @@ export const POSE_DETECTION_CONFIG: PoseDetectionConfig = {
   minPosePresenceConfidence: 0.5,
   minTrackingConfidence: 0.5,
   numPoses: 1,
+  modelComplexity: 1,
+  smoothLandmarks: true,
+  enableSegmentation: false,
+  smoothSegmentation: true,
 };
 
 export const WEBCAM_CONFIG = {
