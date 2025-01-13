@@ -101,13 +101,19 @@ export const CalibrationSystem: React.FC<CalibrationSystemProps> = ({
   if (!isActive) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
         <h2 className="text-2xl font-bold mb-4">Calibration</h2>
-        <p className="mb-4">{steps[step].instruction}</p>
+        <p className="mb-4 text-foreground/80">{steps[step].instruction}</p>
         <Progress value={progress} className="mb-4" />
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button 
+            variant="outline" 
+            onClick={onCancel}
+            className="hover:bg-destructive/10"
+          >
+            Cancel
+          </Button>
         </div>
       </div>
     </div>

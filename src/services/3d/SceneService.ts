@@ -11,8 +11,19 @@ export class SceneService {
   private composer: EffectComposer;
 
   constructor(container: HTMLDivElement) {
+    // Initialize scene
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    
+    // Initialize camera
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
+    this.camera.position.z = 5;
+
+    // Initialize renderer
     this.renderer = new THREE.WebGLRenderer({ 
       alpha: true,
       antialias: true,
@@ -20,10 +31,9 @@ export class SceneService {
     });
     
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(this.renderer.domElement);
     
-    this.camera.position.z = 5;
     this.setupLighting();
     this.setupPostProcessing();
   }
@@ -51,7 +61,7 @@ export class SceneService {
     );
     this.composer.addPass(bloomPass);
 
-    // Custom shader pass for edge smoothing
+    // Add custom shader pass for edge smoothing
     const customShader = {
       uniforms: {
         tDiffuse: { value: null },
