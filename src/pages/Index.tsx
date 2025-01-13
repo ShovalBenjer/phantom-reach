@@ -1,9 +1,12 @@
 import { PoseDetectionUI } from '@/components/PoseDetectionUI';
+import { Hero } from '@/components/sections/Hero';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8">
+      <Hero />
+      
+      <div id="demo-section" className="container mx-auto py-8">
         <div className="flex flex-col items-center mb-8">
           <img 
             src="/phantom-reach-logo.png" 
@@ -11,7 +14,7 @@ const Index = () => {
             className="w-64 mb-4"
             aria-label="PhantomReach - Virtual Gaming, Real Rehabilitation"
           />
-          <h1 className="text-3xl font-bold text-center">PhantomReach</h1>
+          <h2 className="text-3xl font-bold text-center mb-8">Interactive Demo</h2>
         </div>
         <PoseDetectionUI />
       </div>
