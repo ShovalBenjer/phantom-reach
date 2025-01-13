@@ -1,6 +1,4 @@
-import { PoseDetectionConfig } from '../types';
-
-export const POSE_DETECTION_CONFIG: PoseDetectionConfig = {
+export const POSE_DETECTION_CONFIG = {
   modelPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
   minPoseDetectionConfidence: 0.5,
   minPosePresenceConfidence: 0.5,
