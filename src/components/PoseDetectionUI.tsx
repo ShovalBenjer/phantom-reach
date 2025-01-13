@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 import { AmputationType } from '../types';
 import { poseDetectionService } from '../services/poseDetection';
 import { VirtualHandService } from '../services/virtualHand';
 import { POSE_DETECTION_CONFIG, WEBCAM_CONFIG } from '../config/detection';
 import { PoseControls } from './pose/PoseControls';
 import { AdvancedControls } from './controls/AdvancedControls';
-import { Loader2 } from 'lucide-react';
+import { VideoFeed } from './pose/VideoFeed';
+import { CanvasOverlay } from './pose/CanvasOverlay';
+import { checkDeviceSupport } from '../utils/deviceDetection';
 
 export const PoseDetectionUI: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -40,11 +43,19 @@ export const PoseDetectionUI: React.FC = () => {
   const detectionLoopRef = useRef<boolean>(false);
 
   useEffect(() => {
+    const isSupported = checkDeviceSupport();
+    if (!isSupported) {
+      toast({
+        title: "Browser Support",
+        description: "Some features may be limited in your browser. Chrome is recommended for best experience.",
+        variant: "warning",
+      });
+    }
+    
     if (canvasRef.current) {
       virtualHandServiceRef.current = new VirtualHandService(canvasRef.current);
     }
     
-    // Auto-start webcam with selfie mode
     startWebcam();
     
     return () => {
@@ -260,15 +271,12 @@ export const PoseDetectionUI: React.FC = () => {
       </div>
 
       <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
-        <video
+        <VideoFeed
           ref={videoRef}
-          className={`border-2 border-gray-300 ${isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'} transform scale-x-[-1]`}
-          autoPlay
-          playsInline
+          className={isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}
         />
-        <canvas
+        <CanvasOverlay
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1]"
           width={640}
           height={480}
         />
