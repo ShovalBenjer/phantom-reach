@@ -76,10 +76,13 @@ class PoseDetectionService {
           ? landmarkProcessor.processLandmarks(results.landmarks[0])
           : results.landmarks[0];
 
-        return {
+        const elbowPositions = {
           leftElbow: processedLandmarks[13] || null,  // Left elbow landmark index
           rightElbow: processedLandmarks[14] || null, // Right elbow landmark index
         };
+
+        console.log('Elbows detected:', elbowPositions);
+        return elbowPositions;
       }
       
       return null;
