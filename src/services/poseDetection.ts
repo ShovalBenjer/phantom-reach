@@ -1,22 +1,19 @@
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 import { POSE_DETECTION_CONFIG } from '../config/detection';
-import { ElbowPositions, Landmark } from '../types';
+import { toast } from '@/components/ui/use-toast';
+import { ElbowPositions } from '../types';
 
 class PoseDetectionService {
   private poseLandmarker: PoseLandmarker | null = null;
   private lastProcessingTime: number = 0;
   private isProcessing: boolean = false;
-  private frameCount: number = 0;
-  private lastFpsUpdate: number = 0;
   private fps: number = 0;
-  
-  // Confidence thresholds for detection
-  private readonly MIN_VISIBILITY_THRESHOLD = 0.65;
-  private readonly MIN_PRESENCE_CONFIDENCE = 0.75;
+  private lastFpsUpdate: number = 0;
+  private frameCount: number = 0;
 
   async initialize(): Promise<void> {
     try {
-      console.log('[PoseDetection] Initializing MediaPipe Pose Landmarker...');
+      console.log('Initializing pose detection with config:', POSE_DETECTION_CONFIG);
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
@@ -27,40 +24,33 @@ class PoseDetectionService {
           delegate: "GPU"
         },
         runningMode: "VIDEO",
-        numPoses: 1,
-        minPoseDetectionConfidence: this.MIN_PRESENCE_CONFIDENCE,
-        minPosePresenceConfidence: this.MIN_PRESENCE_CONFIDENCE,
-        minTrackingConfidence: this.MIN_PRESENCE_CONFIDENCE,
+        numPoses: POSE_DETECTION_CONFIG.numPoses,
+        minPoseDetectionConfidence: POSE_DETECTION_CONFIG.minPoseDetectionConfidence,
+        minPosePresenceConfidence: POSE_DETECTION_CONFIG.minPosePresenceConfidence,
+        minTrackingConfidence: POSE_DETECTION_CONFIG.minTrackingConfidence,
       });
 
-      console.log('[PoseDetection] Successfully initialized pose landmarker');
+      console.log('Pose detection initialized successfully:', this.poseLandmarker);
     } catch (error) {
-      console.error('[PoseDetection] Initialization failed:', error);
+      console.error('Failed to initialize pose detection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize pose detection. Please check your connection and try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   }
 
-  private isLandmarkVisible(landmark: Landmark): boolean {
-    return (landmark.visibility || 0) > this.MIN_VISIBILITY_THRESHOLD;
-  }
-
-  private calculateArmLength(shoulder: Landmark, elbow: Landmark): number {
-    return Math.sqrt(
-      Math.pow(shoulder.x - elbow.x, 2) +
-      Math.pow(shoulder.y - elbow.y, 2) +
-      Math.pow(shoulder.z - elbow.z, 2)
-    );
-  }
-
-  private isArmPresent(shoulder: Landmark, elbow: Landmark): boolean {
-    const armLength = this.calculateArmLength(shoulder, elbow);
-    const isVisible = this.isLandmarkVisible(shoulder) && this.isLandmarkVisible(elbow);
-    // Typical arm length in normalized coordinates should be between 0.1 and 0.4
-    return isVisible && armLength > 0.1 && armLength < 0.4;
-  }
-
   async detectElbows(video: HTMLVideoElement): Promise<ElbowPositions | null> {
     if (!this.poseLandmarker || this.isProcessing || !video.videoWidth) {
+      console.log('Skipping detection:', {
+        hasLandmarker: !!this.poseLandmarker,
+        isProcessing: this.isProcessing,
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        videoReadyState: video.readyState
+      });
       return null;
     }
     
@@ -71,57 +61,40 @@ class PoseDetectionService {
 
     this.isProcessing = true;
     try {
-      console.log('[PoseDetection] Processing frame at time:', currentTime);
+      console.log('Detecting poses on video:', {
+        time: currentTime,
+        videoSize: `${video.videoWidth}x${video.videoHeight}`
+      });
+      
       const results = await this.poseLandmarker.detectForVideo(video, currentTime);
       this.lastProcessingTime = currentTime;
       
-      this.updateFPS(currentTime);
+      // Update FPS counter
+      this.frameCount++;
+      if (currentTime - this.lastFpsUpdate >= 1000) {
+        this.fps = this.frameCount;
+        this.frameCount = 0;
+        this.lastFpsUpdate = currentTime;
+        console.log('Current FPS:', this.fps);
+      }
 
       if (results?.landmarks?.[0]) {
+        console.log('Pose landmarks detected:', results.landmarks[0]);
         const landmarks = results.landmarks[0];
-        const leftShoulder = landmarks[11];
-        const rightShoulder = landmarks[12];
-        const leftElbow = landmarks[13];
-        const rightElbow = landmarks[14];
-
-        // Check if arms are present based on visibility and distance
-        const leftArmPresent = this.isArmPresent(leftShoulder, leftElbow);
-        const rightArmPresent = this.isArmPresent(rightShoulder, rightElbow);
-
-        console.log('[PoseDetection] Arm detection:', {
-          leftArmPresent,
-          rightArmPresent,
-          leftShoulderVisibility: leftShoulder.visibility,
-          rightShoulderVisibility: rightShoulder.visibility,
-          leftElbowVisibility: leftElbow.visibility,
-          rightElbowVisibility: rightElbow.visibility
-        });
-
         return {
-          leftElbow: leftArmPresent ? leftElbow : null,
-          rightElbow: rightArmPresent ? rightElbow : null,
-          leftShoulder: leftArmPresent ? leftShoulder : null,
-          rightShoulder: rightArmPresent ? rightShoulder : null,
-          landmarks: landmarks,
+          leftElbow: landmarks[13] || null,  // Left elbow landmark index
+          rightElbow: landmarks[14] || null, // Right elbow landmark index
         };
       }
       
+      console.log('No pose detected in results:', results);
       return null;
     } catch (error) {
-      console.error('[PoseDetection] Error detecting poses:', error);
+      console.error('Error detecting poses:', error);
+      this.isProcessing = false;
       throw error;
     } finally {
       this.isProcessing = false;
-    }
-  }
-
-  private updateFPS(currentTime: number): void {
-    this.frameCount++;
-    if (currentTime - this.lastFpsUpdate >= 1000) {
-      this.fps = this.frameCount;
-      this.frameCount = 0;
-      this.lastFpsUpdate = currentTime;
-      console.log('[PoseDetection] Current FPS:', this.fps);
     }
   }
 
