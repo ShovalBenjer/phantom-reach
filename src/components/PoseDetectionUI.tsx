@@ -232,39 +232,46 @@ export const PoseDetectionUI: React.FC = () => {
   };
 
   return (
-    <div ref={containerRef} className={`flex flex-col items-center space-y-4 p-6 ${isFullscreen ? 'fixed inset-0 bg-background' : ''}`}>
+    <div ref={containerRef} className="flex flex-col items-center space-y-4 p-6">
       <LoadingOverlay isLoading={isLoading} />
-      <Header isWebcamEnabled={isWebcamEnabled} fps={fps} />
+      
+      {/* Only show header and controls when not in fullscreen */}
+      {!isFullscreen && (
+        <>
+          <Header isWebcamEnabled={isWebcamEnabled} fps={fps} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
+            <PoseControls 
+              isWebcamEnabled={isWebcamEnabled}
+              isDetectionActive={isDetectionActive}
+              isVirtualHandEnabled={isVirtualHandEnabled}
+              isFullscreen={isFullscreen}
+              amputationType={amputationType}
+              onStartWebcam={startWebcam}
+              onToggleDetection={toggleDetection}
+              onToggleVirtualHand={toggleVirtualHand}
+              onToggleFullscreen={toggleFullscreen}
+              onAmputationTypeChange={setAmputationType}
+            />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
-        <PoseControls 
-          isWebcamEnabled={isWebcamEnabled}
-          isDetectionActive={isDetectionActive}
-          isVirtualHandEnabled={isVirtualHandEnabled}
-          isFullscreen={isFullscreen}
-          amputationType={amputationType}
-          onStartWebcam={startWebcam}
-          onToggleDetection={toggleDetection}
-          onToggleVirtualHand={toggleVirtualHand}
-          onToggleFullscreen={toggleFullscreen}
-          onAmputationTypeChange={setAmputationType}
-        />
+            {isWebcamEnabled && (
+              <div className="relative flex justify-end">
+                <AdvancedControls
+                  modelComplexity={modelComplexity}
+                  smoothingEnabled={smoothingEnabled}
+                  segmentationEnabled={segmentationEnabled}
+                  confidenceThreshold={confidenceThreshold}
+                  onModelComplexityChange={handleModelComplexityChange}
+                  onSmoothingToggle={handleSmoothingToggle}
+                  onSegmentationToggle={handleSegmentationToggle}
+                  onConfidenceThresholdChange={handleConfidenceThresholdChange}
+                />
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
-        {isWebcamEnabled && (
-          <AdvancedControls
-            modelComplexity={modelComplexity}
-            smoothingEnabled={smoothingEnabled}
-            segmentationEnabled={segmentationEnabled}
-            confidenceThreshold={confidenceThreshold}
-            onModelComplexityChange={handleModelComplexityChange}
-            onSmoothingToggle={handleSmoothingToggle}
-            onSegmentationToggle={handleSegmentationToggle}
-            onConfidenceThresholdChange={handleConfidenceThresholdChange}
-          />
-        )}
-      </div>
-
-      <div className={`relative ${isFullscreen ? 'flex-1 w-full flex items-center justify-center' : ''}`}>
+      <div className={`relative ${isFullscreen ? 'fixed inset-0 bg-black flex items-center justify-center' : ''}`}>
         <VideoFeed
           ref={videoRef}
           className={isFullscreen ? 'w-full h-full object-contain' : 'w-[640px] h-[480px]'}
@@ -273,6 +280,7 @@ export const PoseDetectionUI: React.FC = () => {
           ref={canvasRef}
           width={640}
           height={480}
+          className={isFullscreen ? 'w-full h-full' : ''}
         />
         <VisualEffects 
           isPoseDetected={isPoseDetected}

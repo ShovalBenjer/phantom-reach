@@ -27,8 +27,8 @@ export const VisualEffects: React.FC<VisualEffectsProps> = ({
                 exit={{ scale: 0, opacity: 0 }}
                 className="absolute w-8 h-8 bg-blue-500 rounded-full -translate-x-1/2 -translate-y-1/2"
                 style={{
-                  left: `${elbowPositions.leftElbow.x * 100}%`,
-                  top: `${elbowPositions.leftElbow.y * 100}%`
+                  left: `${elbowPositions.leftElbow.x * 640}px`,
+                  top: `${elbowPositions.leftElbow.y * 480}px`
                 }}
               />
             )}
@@ -39,8 +39,8 @@ export const VisualEffects: React.FC<VisualEffectsProps> = ({
                 exit={{ scale: 0, opacity: 0 }}
                 className="absolute w-8 h-8 bg-green-500 rounded-full -translate-x-1/2 -translate-y-1/2"
                 style={{
-                  left: `${elbowPositions.rightElbow.x * 100}%`,
-                  top: `${elbowPositions.rightElbow.y * 100}%`
+                  left: `${elbowPositions.rightElbow.x * 640}px`,
+                  top: `${elbowPositions.rightElbow.y * 480}px`
                 }}
               />
             )}
