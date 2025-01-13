@@ -1,10 +1,11 @@
 import { Landmark } from '../types';
+import { smoothLandmarks } from './coordinateTransform';
 
 class LandmarkProcessor {
   private readonly historySize = 5;
   private landmarkHistory: Landmark[][] = [];
   private readonly smoothingFactor = 0.8;
-  private readonly minVisibility = 0.65;
+  private readonly minVisibility = 0.5;
 
   reset() {
     this.landmarkHistory = [];
@@ -24,35 +25,24 @@ class LandmarkProcessor {
         return landmark;
       }
 
-      // Calculate smoothed position using history
-      const smoothedPosition = this.calculateSmoothedPosition(index);
-      return {
-        ...landmark,
-        x: smoothedPosition.x,
-        y: smoothedPosition.y,
-        z: smoothedPosition.z
-      };
+      // Get previous landmark for smoothing
+      const previousLandmark = this.landmarkHistory.length > 1 
+        ? this.landmarkHistory[this.landmarkHistory.length - 2][index]
+        : null;
+
+      // Apply smoothing
+      return smoothLandmarks(landmark, previousLandmark, this.smoothingFactor);
     });
   }
 
-  private calculateSmoothedPosition(landmarkIndex: number) {
-    if (this.landmarkHistory.length < 2) {
-      return this.landmarkHistory[0][landmarkIndex];
-    }
-
-    const currentPosition = this.landmarkHistory[this.landmarkHistory.length - 1][landmarkIndex];
-    const previousPosition = this.landmarkHistory[this.landmarkHistory.length - 2][landmarkIndex];
-
-    return {
-      x: this.smoothValue(previousPosition.x, currentPosition.x),
-      y: this.smoothValue(previousPosition.y, currentPosition.y),
-      z: this.smoothValue(previousPosition.z, currentPosition.z),
-      visibility: currentPosition.visibility
-    };
+  // Get the confidence level for a specific landmark
+  getLandmarkConfidence(landmark: Landmark): number {
+    return landmark.visibility || 0;
   }
 
-  private smoothValue(previous: number, current: number): number {
-    return previous * this.smoothingFactor + current * (1 - this.smoothingFactor);
+  // Check if a landmark's tracking is reliable
+  isLandmarkReliable(landmark: Landmark): boolean {
+    return this.getLandmarkConfidence(landmark) >= this.minVisibility;
   }
 }
 

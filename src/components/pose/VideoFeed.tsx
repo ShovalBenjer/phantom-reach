@@ -9,9 +9,14 @@ export const VideoFeed = forwardRef<HTMLVideoElement, VideoFeedProps>(
     return (
       <video
         ref={ref}
-        className={`border-2 border-gray-300 transform scale-x-[-1] ${className}`}
+        className={`transform scale-x-[-1] ${className}`}
         autoPlay
         playsInline
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain'
+        }}
       />
     );
   }

@@ -14,6 +14,10 @@ export const CanvasOverlay = forwardRef<HTMLCanvasElement, CanvasOverlayProps>(
         className={`absolute top-0 left-0 w-full h-full pointer-events-none transform scale-x-[-1] ${className}`}
         width={width}
         height={height}
+        style={{
+          width: '100%',
+          height: '100%'
+        }}
       />
     );
   }
