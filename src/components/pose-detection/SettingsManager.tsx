@@ -1,7 +1,5 @@
-import React from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { poseDetectionService } from '../../services/poseDetection';
-import { POSE_DETECTION_CONFIG } from '../../config/detection';
 
 interface SettingsManagerProps {
   modelComplexity: 'Lite' | 'Full' | 'Heavy';
@@ -15,17 +13,13 @@ interface SettingsManagerProps {
   setIsLoading: (loading: boolean) => void;
 }
 
-export const SettingsManager: React.FC<SettingsManagerProps> = ({
-  modelComplexity,
-  smoothingEnabled,
-  segmentationEnabled,
-  confidenceThreshold,
+export const SettingsManager = ({
   setModelComplexity,
   setSmoothingEnabled,
   setSegmentationEnabled,
   setConfidenceThreshold,
   setIsLoading,
-}) => {
+}: SettingsManagerProps) => {
   const handleModelComplexityChange = async (value: 'Lite' | 'Full' | 'Heavy') => {
     setModelComplexity(value);
     setIsLoading(true);

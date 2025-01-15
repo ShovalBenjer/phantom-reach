@@ -13,6 +13,7 @@ import { LoadingOverlay } from '../pose/LoadingOverlay';
 import { VisualEffects } from '../effects/VisualEffects';
 import { ArmModel } from '../3d/ArmModel';
 import { SettingsManager } from './SettingsManager';
+import { poseDetectionService } from '../../services/poseDetection';
 
 export const MainContainer: React.FC = () => {
   const [isWebcamEnabled, setIsWebcamEnabled] = useState(false);
@@ -45,7 +46,7 @@ export const MainContainer: React.FC = () => {
     rightElbow?: { x: number; y: number; z: number } | null;
   }>({});
 
-  const settingsManager = SettingsManager({
+  const settingsHandlers = SettingsManager({
     modelComplexity,
     smoothingEnabled,
     segmentationEnabled,
@@ -125,10 +126,10 @@ export const MainContainer: React.FC = () => {
                   smoothingEnabled={smoothingEnabled}
                   segmentationEnabled={segmentationEnabled}
                   confidenceThreshold={confidenceThreshold}
-                  onModelComplexityChange={settingsManager.handleModelComplexityChange}
-                  onSmoothingToggle={settingsManager.handleSmoothingToggle}
-                  onSegmentationToggle={settingsManager.handleSegmentationToggle}
-                  onConfidenceThresholdChange={settingsManager.handleConfidenceThresholdChange}
+                  onModelComplexityChange={settingsHandlers.handleModelComplexityChange}
+                  onSmoothingToggle={settingsHandlers.handleSmoothingToggle}
+                  onSegmentationToggle={settingsHandlers.handleSegmentationToggle}
+                  onConfidenceThresholdChange={settingsHandlers.handleConfidenceThresholdChange}
                 />
               </div>
             )}
