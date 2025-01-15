@@ -39,7 +39,6 @@ export const PoseControls: React.FC<PoseControlsProps> = ({
           <SelectContent>
             <SelectItem value="left_arm">Left Arm</SelectItem>
             <SelectItem value="right_arm">Right Arm</SelectItem>
-            <SelectItem value="both">Both Arms</SelectItem>
           </SelectContent>
         </Select>
 
