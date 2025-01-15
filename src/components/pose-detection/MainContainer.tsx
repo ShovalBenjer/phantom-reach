@@ -45,7 +45,7 @@ export const MainContainer: React.FC = () => {
     rightElbow?: { x: number; y: number; z: number } | null;
   }>({});
 
-  const settingsHandlers = SettingsManager({
+  const settingsManager = SettingsManager({
     modelComplexity,
     smoothingEnabled,
     segmentationEnabled,
@@ -125,10 +125,10 @@ export const MainContainer: React.FC = () => {
                   smoothingEnabled={smoothingEnabled}
                   segmentationEnabled={segmentationEnabled}
                   confidenceThreshold={confidenceThreshold}
-                  onModelComplexityChange={settingsHandlers.handleModelComplexityChange}
-                  onSmoothingToggle={settingsHandlers.handleSmoothingToggle}
-                  onSegmentationToggle={settingsHandlers.handleSegmentationToggle}
-                  onConfidenceThresholdChange={settingsHandlers.handleConfidenceThresholdChange}
+                  onModelComplexityChange={settingsManager.handleModelComplexityChange}
+                  onSmoothingToggle={settingsManager.handleSmoothingToggle}
+                  onSegmentationToggle={settingsManager.handleSegmentationToggle}
+                  onConfidenceThresholdChange={settingsManager.handleConfidenceThresholdChange}
                 />
               </div>
             )}
