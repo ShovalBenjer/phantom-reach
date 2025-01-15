@@ -4,7 +4,7 @@ export interface PoseDetectionConfig {
   minPosePresenceConfidence: number;
   minTrackingConfidence: number;
   numPoses: number;
-  modelComplexity: 'Lite' | 'Full' | 'Heavy';
+  modelComplexity?: 'Lite' | 'Full' | 'Heavy';
   smoothLandmarks?: boolean;
   enableSegmentation?: boolean;
   smoothSegmentation?: boolean;
