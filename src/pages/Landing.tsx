@@ -28,6 +28,21 @@ const Landing = () => {
     }
   };
 
+  const logoVariants = {
+    initial: {
+      scale: 3,
+      y: "30vh",
+    },
+    animate: {
+      scale: 1,
+      y: 0,
+      transition: {
+        duration: 1.5,
+        ease: "easeOut",
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-12">
@@ -37,10 +52,12 @@ const Landing = () => {
           variants={containerVariants}
           className="max-w-6xl mx-auto space-y-16"
         >
-          {/* Logo Section */}
+          {/* Logo Section with new animation */}
           <motion.div 
             className="text-center"
-            variants={itemVariants}
+            initial="initial"
+            animate="animate"
+            variants={logoVariants}
           >
             <img 
               src="/lovable-uploads/019da9ba-4e1c-41c1-a77c-8dcea51f53b9.png" 
