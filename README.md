@@ -17,6 +17,8 @@ This is a modern web application built using **React**, **TypeScript**, and **Vi
 *   **Visual Effects:** Includes components for rendering visual effects, potentially enhancing the interactive experience.
 *   **Device Detection:** Adapts behavior or features based on the user's device (desktop vs. mobile) using `device-detector-js`.
 
+## Demo Preview
+The video below demonstrates the core functionality of Phantom Reach in action. It provides a walkthrough of the user experience, from initial input to final output, showcasing how the system handles tasks such as data ingestion, real-time processing, and complaint resolution using our AI-powered pipeline. This visual overview is designed to give a quick and intuitive understanding of the product’s capabilities.
 
 ## Technologies Used
 
