@@ -19,6 +19,7 @@ This is a modern web application built using **React**, **TypeScript**, and **Vi
 ## Demo Preview
 The video below demonstrates the core functionality of Phantom Reach in action. It provides a walkthrough of the user experience, from initial input to final output, showcasing how the system handles tasks such as data ingestion, real-time processing, and complaint resolution using our AI-powered pipeline. This visual overview is designed to give a quick and intuitive understanding of the product’s capabilities.
 ![demo](https://github.com/ShovalBenjer/phantom-reach/blob/main/docs/PhantomReachDemo1-ezgif.com-video-to-gif-converter.gif)
+
 👉 **Try it live now:**  
 [Click here to launch the Phantom Reach demo](https://phantom-reach-poc.lovable.app/)
 
