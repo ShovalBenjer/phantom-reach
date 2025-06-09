@@ -1,5 +1,5 @@
 # Pose and Virtual Hand Interaction Application by PhantomReach
-
+![demo](PhantomReach_logo-ezgif.com-video-to-gif-converter.gif)
 
 
 This is a modern web application built using **React**, **TypeScript**, and **Vite**, designed to explore and demonstrate capabilities in real-time **pose detection** and **virtual hand interaction**. Leveraging the power of **MediaPipe Tasks Vision**, the application processes video input to identify human poses and potentially track hand movements. This data is then used to enable interactive experiences, such as controlling virtual elements or receiving feedback based on physical posture and gestures. The user interface is crafted using **Shadcn UI** components styled with **Tailwind CSS** for a clean, responsive, and accessible design. The project structure follows State-of-the-Art (SOTA) practices for maintainability and scalability.
@@ -19,6 +19,7 @@ This is a modern web application built using **React**, **TypeScript**, and **Vi
 
 ## Demo Preview
 The video below demonstrates the core functionality of Phantom Reach in action. It provides a walkthrough of the user experience, from initial input to final output, showcasing how the system handles tasks such as data ingestion, real-time processing, and complaint resolution using our AI-powered pipeline. This visual overview is designed to give a quick and intuitive understanding of the product’s capabilities.
+![demo](PhantomReachDemo1-ezgif.com-video-to-gif-converter.gif)
 
 ## Technologies Used
 
